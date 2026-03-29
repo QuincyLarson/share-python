@@ -1,0 +1,87 @@
+[
+  {
+    "id": "mortgage-payment",
+    "title": "Mortgage payment calculator",
+    "category": "Money & loans",
+    "summary": "Estimate a monthly mortgage payment from principal, rate, and term.",
+    "tags": ["mortgage", "loan", "finance"],
+    "runtime": "fast",
+    "difficulty": "beginner",
+    "description": "A fixed-rate monthly payment example with explicit assumptions and printed totals.",
+    "scriptPath": "examples/finance/mortgage-payment.py",
+    "issueContext": "Initial curated example pack",
+    "featured": true,
+    "checks": [{ "type": "includes", "value": "Monthly payment:" }]
+  },
+  {
+    "id": "compound-interest",
+    "title": "Compound interest calculator",
+    "category": "Money & loans",
+    "summary": "Project balance growth with regular monthly contributions.",
+    "tags": ["savings", "interest", "investment"],
+    "runtime": "fast",
+    "difficulty": "beginner",
+    "description": "Shows compounding with a small loop and clearly labeled outputs.",
+    "scriptPath": "examples/finance/compound-interest.py",
+    "issueContext": "Initial curated example pack",
+    "featured": true,
+    "checks": [{ "type": "includes", "value": "Ending balance:" }]
+  },
+  {
+    "id": "days-between-dates",
+    "title": "Days between dates",
+    "category": "Time & timezone",
+    "summary": "Compute signed and absolute day counts between two ISO dates.",
+    "tags": ["date", "time", "calendar"],
+    "runtime": "fast",
+    "difficulty": "beginner",
+    "description": "Uses the standard library date type to keep the calculation transparent.",
+    "scriptPath": "examples/time/days-between-dates.py",
+    "issueContext": "Initial curated example pack",
+    "featured": true,
+    "checks": [{ "type": "includes", "value": "Signed days:" }]
+  },
+  {
+    "id": "business-days-between-dates",
+    "title": "Business days between dates",
+    "category": "Time & timezone",
+    "summary": "Count weekdays in a date range without introducing holiday logic.",
+    "tags": ["date", "workday", "calendar"],
+    "runtime": "fast",
+    "difficulty": "beginner",
+    "description": "A loop-based workday counter that is easy to modify later.",
+    "scriptPath": "examples/time/business-days-between-dates.py",
+    "issueContext": "Initial curated example pack",
+    "featured": false,
+    "checks": [{ "type": "includes", "value": "Business days:" }]
+  },
+  {
+    "id": "json-pretty-printer",
+    "title": "JSON pretty-printer",
+    "category": "Data & text utilities",
+    "summary": "Format compact JSON text into readable, indented output.",
+    "tags": ["json", "text", "developer"],
+    "runtime": "fast",
+    "difficulty": "beginner",
+    "description": "A simple data-text utility that keeps everything inline and text-only.",
+    "scriptPath": "examples/data/json-pretty-printer.py",
+    "issueContext": "Initial curated example pack",
+    "featured": true,
+    "checks": [{ "type": "includes", "value": "Top-level type:" }]
+  },
+  {
+    "id": "running-pace",
+    "title": "Running pace calculator",
+    "category": "Health & everyday metrics",
+    "summary": "Convert a finish time into pace-per-mile and a projected 5K time.",
+    "tags": ["pace", "fitness", "calculator"],
+    "runtime": "fast",
+    "difficulty": "beginner",
+    "description": "A small everyday-metrics example with transparent formulas and readable output.",
+    "scriptPath": "examples/health/running-pace.py",
+    "issueContext": "Initial curated example pack",
+    "featured": true,
+    "checks": [{ "type": "includes", "value": "Pace per mile:" }]
+  }
+]
+

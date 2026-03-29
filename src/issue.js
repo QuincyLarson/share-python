@@ -8,6 +8,7 @@ export function buildIssueUrl({ currentUrl, example, runtimeHint, isCustomScript
   const bodySections = [
     '## Context',
     '',
+    `- App version: ${APP_CONFIG.appVersion}`,
     `- Example: ${example ? `${example.title} (\`${example.id}\`)` : 'ad-hoc script'}`,
     `- Runtime hint: ${runtimeHint ?? 'unknown'}`,
     `- Share URL: ${currentUrl}`,

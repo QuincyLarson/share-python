@@ -3,6 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'none'; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-src 'none'; worker-src 'self'"
+    />
     <title>freeCodeCamp Python Runner</title>
     <meta
       name="description"
@@ -14,8 +18,8 @@
       content="A lightweight browser-based Python runner for practical text-only scripts."
     />
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://share-python.pages.dev/" />
-    <link rel="license" href="/LICENSE" />
+    <meta name="theme-color" content="#17323b" />
+    <link rel="license" href="./LICENSE" />
   </head>
   <body>
     <div class="app-shell">
@@ -143,6 +147,6 @@
       <div id="examples-list" class="examples-list" role="list"></div>
     </dialog>
 
-    <script type="module" src="/src/main.js"></script>
+    <script type="module" src="./src/main.js"></script>
   </body>
 </html>

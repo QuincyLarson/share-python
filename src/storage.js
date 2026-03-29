@@ -1,71 +1,90 @@
-import { APP_CONFIG } from './config.js';
+export function createDraftStorage(storage, key) {
+  return {
+    load() {
+      try {
+        return storage?.getItem(key) ?? '';
+      } catch {
+        return '';
+      }
+    },
+    save(sourceText) {
+      try {
+        storage?.setItem(key, sourceText);
+      } catch {
+        // localStorage may be unavailable in private browsing or strict privacy modes.
+      }
+    },
+    clear() {
+      try {
+        storage?.removeItem(key);
+      } catch {
+        // Nothing else to do when storage is unavailable.
+      }
+    }
+  };
+}
 
-export function loadDraft(storage = globalThis.localStorage) {
-  if (!storage) {
-    return null;
-  }
+export function resolveInitialSource({
+  fragmentState,
+  draftSource,
+  defaultSource,
+  findExampleById
+}) {
+  if (fragmentState?.type === 'example') {
+    const example = findExampleById(fragmentState.exampleId);
 
-  try {
-    const raw = storage.getItem(APP_CONFIG.storageKey);
-    if (!raw) {
-      return null;
+    if (example) {
+      return {
+        sourceText: example.script,
+        activeExampleId: example.id,
+        runtimeHint: fragmentState.runtimeHint ?? example.runtime ?? null,
+        statusText: `Loaded shared example: ${example.title}.`
+      };
     }
 
-    const parsed = JSON.parse(raw);
-    return typeof parsed?.source === 'string' ? parsed : null;
-  } catch {
-    return null;
-  }
-}
-
-export function saveDraft(draft, storage = globalThis.localStorage) {
-  if (!storage) {
-    return;
-  }
-
-  try {
-    storage.setItem(APP_CONFIG.storageKey, JSON.stringify(draft));
-  } catch {
-    // Storage failures should not block editing.
-  }
-}
-
-export function resolveInitialSource({ fragmentState, localDraft, defaultExample }) {
-  if (fragmentState?.source) {
     return {
-      source: fragmentState.source,
-      exampleId: fragmentState.exampleId ?? null,
+      sourceText: draftSource || defaultSource,
+      activeExampleId: null,
+      runtimeHint: null,
+      statusText: draftSource
+        ? 'Shared example was not found. Restored your local draft instead.'
+        : 'Shared example was not found. Loaded the starter script instead.'
+    };
+  }
+
+  if (fragmentState?.type === 'code') {
+    return {
+      sourceText: fragmentState.sourceText,
+      activeExampleId: null,
       runtimeHint: fragmentState.runtimeHint ?? null,
-      origin: fragmentState.exampleId ? 'shared example' : 'shared code',
-      warning: fragmentState.error ?? null,
+      statusText: 'Loaded code from the shared link. It will not run until you click Run.'
     };
   }
 
-  if (fragmentState?.error) {
+  if (fragmentState?.type === 'error') {
     return {
-      source: defaultExample.source,
-      exampleId: defaultExample.id,
-      runtimeHint: defaultExample.runtime,
-      origin: 'starter example',
-      warning: fragmentState.error,
+      sourceText: draftSource || defaultSource,
+      activeExampleId: null,
+      runtimeHint: null,
+      statusText: draftSource
+        ? 'The shared link could not be decoded. Restored your local draft instead.'
+        : 'The shared link could not be decoded. Loaded the starter script instead.'
     };
   }
 
-  if (localDraft?.source) {
+  if (draftSource) {
     return {
-      source: localDraft.source,
-      exampleId: localDraft.exampleId ?? null,
-      runtimeHint: localDraft.runtimeHint ?? null,
-      origin: 'local draft',
-      warning: null,
+      sourceText: draftSource,
+      activeExampleId: null,
+      runtimeHint: null,
+      statusText: 'Restored your last local draft.'
     };
   }
 
   return {
-    source: defaultExample.source,
-    exampleId: defaultExample.id,
-    runtimeHint: defaultExample.runtime,
-    origin: 'starter example',
-    warning: null,
+    sourceText: defaultSource,
+    activeExampleId: null,
+    runtimeHint: null,
+    statusText: 'Loaded the starter script.'
   };
 }

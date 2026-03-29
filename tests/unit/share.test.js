@@ -1,40 +1,40 @@
-import { describe, expect, it } from 'vitest';
-import { EXAMPLES } from '../../src/examples.js';
-import { buildShareFragment, parseShareFragment } from '../../src/share.js';
+import test from 'node:test';
+import assert from 'node:assert/strict';
 
-describe('share helpers', () => {
-  it('uses an example permalink when the editor matches a curated example exactly', () => {
-    const result = buildShareFragment({
-      source: EXAMPLES[0].source,
-      runtimeHint: 'fast',
-      examples: EXAMPLES,
-    });
+import { decodeShareFragment, encodeShareFragment, isShareUrlTooLong } from '../../src/share.js';
 
-    expect(result.fragment).toBe(`ex=${EXAMPLES[0].id}`);
-    expect(result.isExamplePermalink).toBe(true);
-    expect(result.isTooLong).toBe(false);
+test('code payload share fragments round-trip', async () => {
+  const sourceText = 'print("hello from a shared script")\n';
+  const fragment = await encodeShareFragment({
+    sourceText,
+    runtimeHint: 'full'
   });
 
-  it('round-trips a custom code payload through the fragment codec', () => {
-    const source = 'print("hello from custom code")\n';
-    const shareState = buildShareFragment({
-      source,
-      runtimeHint: 'full',
-      examples: EXAMPLES,
-    });
+  const decoded = await decodeShareFragment(fragment);
 
-    const parsed = parseShareFragment(`#${shareState.fragment}`, EXAMPLES);
-    expect(parsed).toEqual({
-      source,
-      exampleId: null,
-      runtimeHint: 'full',
-      error: null,
-    });
+  assert.equal(decoded.type, 'code');
+  assert.equal(decoded.sourceText, sourceText);
+  assert.equal(decoded.runtimeHint, 'full');
+});
+
+test('example share fragments decode without embedding script text', async () => {
+  const fragment = await encodeShareFragment({
+    sourceText: '',
+    exampleId: 'mortgage-payment',
+    runtimeHint: 'fast'
   });
 
-  it('surfaces a friendly error when a share link cannot be decoded', () => {
-    const parsed = parseShareFragment('#v=1&code=not-real', EXAMPLES);
-    expect(parsed.error).toMatch(/could not be decoded/i);
-    expect(parsed.source).toBeNull();
+  const decoded = await decodeShareFragment(fragment);
+
+  assert.deepEqual(decoded, {
+    type: 'example',
+    exampleId: 'mortgage-payment',
+    runtimeHint: 'fast'
   });
 });
+
+test('share URL length warnings trigger above the configured threshold', () => {
+  assert.equal(isShareUrlTooLong('https://example.com/#short', 50), false);
+  assert.equal(isShareUrlTooLong('https://example.com/#this-link-is-definitely-too-long', 20), true);
+});
+

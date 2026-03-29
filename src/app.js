@@ -1,8 +1,17 @@
 import { APP_CONFIG, FOUNDATION_OUTPUT } from './config.js';
-import { getExampleById, EXAMPLES } from './examples.js';
+import {
+  EXAMPLES,
+  filterExamples,
+  findExampleById,
+  findMatchingExampleBySource,
+} from './examples.js';
 import { buildIssueUrl } from './issue.js';
-import { buildShareUrl, findMatchingExample, parseShareFragment } from './share.js';
-import { loadDraft, resolveInitialSource, saveDraft } from './storage.js';
+import {
+  decodeShareFragment,
+  encodeShareFragment,
+  isShareUrlTooLong,
+} from './share.js';
+import { createDraftStorage, resolveInitialSource } from './storage.js';
 
 function debounce(fn, waitMs) {
   let timeoutId = null;
@@ -59,27 +68,6 @@ function buildExampleCard(example, onLoad) {
   return article;
 }
 
-function filterExamples(query) {
-  const normalizedQuery = query.trim().toLowerCase();
-  if (!normalizedQuery) {
-    return EXAMPLES;
-  }
-
-  return EXAMPLES.filter((example) => {
-    const haystack = [
-      example.title,
-      example.category,
-      example.summary,
-      example.description,
-      ...example.tags,
-    ]
-      .join(' ')
-      .toLowerCase();
-
-    return haystack.includes(normalizedQuery);
-  });
-}
-
 function normalizeSource(source) {
   return source.replace(/\r\n/g, '\n');
 }
@@ -100,7 +88,13 @@ async function copyText(text) {
   textarea.remove();
 }
 
-export function createApp() {
+function buildShareUrl(fragment) {
+  const shareUrl = new URL(window.location.href);
+  shareUrl.hash = fragment.startsWith('#') ? fragment.slice(1) : fragment;
+  return shareUrl.toString();
+}
+
+export async function createApp() {
   const editor = document.querySelector('#editor');
   const output = document.querySelector('#output');
   const statusMessage = document.querySelector('#status-message');
@@ -115,20 +109,28 @@ export function createApp() {
   const loadExampleButton = document.querySelector('#load-example-button');
   const clearOutputButton = document.querySelector('#clear-output-button');
 
-  const defaultExample = getExampleById(APP_CONFIG.defaultExampleId) ?? EXAMPLES[0];
-  const fragmentState = parseShareFragment(window.location.hash, EXAMPLES);
-  const localDraft = loadDraft();
+  const draftStorage = createDraftStorage(window.localStorage, APP_CONFIG.storageKey);
+  const defaultExample = findExampleById(APP_CONFIG.defaultExampleId) ?? EXAMPLES[0];
+  const fragmentState = await decodeShareFragment(window.location.hash);
+  const localDraft = draftStorage.load();
   const initialState = resolveInitialSource({
     fragmentState,
-    localDraft,
-    defaultExample,
+    draftSource: localDraft,
+    defaultSource: defaultExample?.script ?? '',
+    findExampleById,
   });
 
   const state = {
-    source: initialState.source,
-    exampleId: initialState.exampleId,
-    runtimeHint: initialState.runtimeHint,
+    source: initialState.sourceText,
+    activeExampleId:
+      initialState.activeExampleId ??
+      findMatchingExampleBySource(initialState.sourceText)?.id ??
+      null,
+    runtimeHint: initialState.runtimeHint ?? defaultExample?.runtime ?? 'fast',
+    shareUrl: window.location.href,
+    issueUrl: reportIssueLink.href,
   };
+  let shareRefreshToken = 0;
 
   function renderOutput() {
     output.textContent = FOUNDATION_OUTPUT;
@@ -139,7 +141,7 @@ export function createApp() {
   }
 
   function renderShareSummary() {
-    const matchingExample = findMatchingExample(state.source, EXAMPLES);
+    const matchingExample = findMatchingExampleBySource(state.source);
     if (matchingExample) {
       shareSummary.textContent = `Copy share link will use the short example permalink for ${matchingExample.title}.`;
       return;
@@ -150,52 +152,70 @@ export function createApp() {
   }
 
   function renderEditorOrigin(origin) {
-    const matchingExample = state.exampleId ? getExampleById(state.exampleId) : null;
-    if (matchingExample) {
-      editorOrigin.textContent = `${origin} · ${matchingExample.title}`;
+    const activeExample = state.activeExampleId ? findExampleById(state.activeExampleId) : null;
+    const matchingExample = findMatchingExampleBySource(state.source);
+    const example = activeExample ?? matchingExample;
+
+    if (example) {
+      const isExactMatch = normalizeSource(example.script) === normalizeSource(state.source);
+      editorOrigin.textContent = isExactMatch
+        ? `${origin} · ${example.title}`
+        : `${origin} · based on ${example.title}`;
       return;
     }
 
     editorOrigin.textContent = origin;
   }
 
-  function updateIssueLink() {
-    const shareState = buildShareUrl({
-      source: state.source,
+  async function refreshDerivedLinks() {
+    const refreshId = ++shareRefreshToken;
+    const matchingExample = findMatchingExampleBySource(state.source);
+    const fragment = await encodeShareFragment({
+      sourceText: state.source,
+      exampleId: matchingExample?.id ?? null,
       runtimeHint: state.runtimeHint,
-      examples: EXAMPLES,
     });
-
-    const example = getExampleById(state.exampleId);
-    const isCustomScript = !example || normalizeSource(example.source) !== normalizeSource(state.source);
-
-    reportIssueLink.href = buildIssueUrl({
-      currentUrl: shareState.url,
-      example,
+    const shareUrl = buildShareUrl(fragment);
+    const activeExample = state.activeExampleId ? findExampleById(state.activeExampleId) : null;
+    const isCustomScript =
+      !activeExample || normalizeSource(activeExample.script) !== normalizeSource(state.source);
+    const issueUrl = buildIssueUrl({
+      currentUrl: shareUrl,
+      example: activeExample,
       runtimeHint: state.runtimeHint,
       isCustomScript,
     });
+
+    if (refreshId !== shareRefreshToken) {
+      return;
+    }
+
+    state.shareUrl = shareUrl;
+    state.issueUrl = issueUrl;
+    reportIssueLink.href = issueUrl;
+
+    if (!matchingExample && isShareUrlTooLong(shareUrl, APP_CONFIG.maxShareUrlLength)) {
+      shareSummary.textContent =
+        'Copy share link will compress the current editor contents into the URL fragment. This link is long and may be unreliable to share.';
+      return;
+    }
+
+    renderShareSummary();
   }
 
   function persistDraft() {
-    saveDraft({
-      source: state.source,
-      exampleId: state.exampleId,
-      runtimeHint: state.runtimeHint,
-      savedAt: new Date().toISOString(),
-    });
+    draftStorage.save(state.source);
   }
 
   const persistDraftDebounced = debounce(persistDraft, 250);
 
-  function applySource(source, nextExampleId, origin) {
+  async function applySource(source, nextExampleId, origin) {
     state.source = source;
-    state.exampleId = nextExampleId;
-    state.runtimeHint = nextExampleId ? getExampleById(nextExampleId)?.runtime ?? 'fast' : 'fast';
+    state.activeExampleId = nextExampleId;
+    state.runtimeHint = nextExampleId ? findExampleById(nextExampleId)?.runtime ?? 'fast' : 'fast';
     editor.value = source;
     renderEditorOrigin(origin);
-    renderShareSummary();
-    updateIssueLink();
+    await refreshDerivedLinks();
     persistDraftDebounced();
   }
 
@@ -204,8 +224,8 @@ export function createApp() {
     examplesList.replaceChildren(
       ...results.map((example) =>
         buildExampleCard(example, (exampleId) => {
-          const nextExample = getExampleById(exampleId);
-          applySource(nextExample.source, nextExample.id, 'example library');
+          const nextExample = findExampleById(exampleId);
+          applySource(nextExample.script, nextExample.id, 'example library');
           renderStatus(`Loaded ${nextExample.title}.`);
           examplesDialog.close();
         }),
@@ -217,13 +237,9 @@ export function createApp() {
 
   editor.value = state.source;
   renderOutput();
-  renderShareSummary();
-  renderEditorOrigin(initialState.origin);
-  updateIssueLink();
-
-  if (initialState.warning) {
-    renderStatus(initialState.warning);
-  }
+  renderEditorOrigin('loaded');
+  renderStatus(initialState.statusText);
+  await refreshDerivedLinks();
 
   installTabBehavior(editor);
   renderExampleList();
@@ -240,20 +256,20 @@ export function createApp() {
   });
 
   copyShareLinkButton.addEventListener('click', async () => {
-    const shareState = buildShareUrl({
-      source: state.source,
-      runtimeHint: state.runtimeHint,
-      examples: EXAMPLES,
-    });
-
-    await copyText(shareState.url);
-    renderStatus(
-      shareState.isTooLong
-        ? 'Copied a long share link. Trim comments or pasted data if it feels unreliable.'
-        : shareState.isExamplePermalink
-          ? 'Copied a short example permalink.'
-          : 'Copied a prefilled share link.',
-    );
+    try {
+      await refreshDerivedLinks();
+      const matchingExample = findMatchingExampleBySource(state.source);
+      await copyText(state.shareUrl);
+      renderStatus(
+        !matchingExample && isShareUrlTooLong(state.shareUrl, APP_CONFIG.maxShareUrlLength)
+          ? 'Copied a long share link. Trim comments or pasted data if it feels unreliable.'
+          : matchingExample
+            ? 'Copied a short example permalink.'
+            : 'Copied a prefilled share link.',
+      );
+    } catch {
+      renderStatus('Could not copy the share link automatically. Copy it from the browser address bar instead.');
+    }
   });
 
   clearOutputButton.addEventListener('click', () => {
@@ -263,12 +279,12 @@ export function createApp() {
 
   editor.addEventListener('input', () => {
     state.source = editor.value;
-    const matchingExample = findMatchingExample(state.source, EXAMPLES);
-    state.exampleId = matchingExample?.id ?? null;
+    const matchingExample = findMatchingExampleBySource(state.source);
     state.runtimeHint = matchingExample?.runtime ?? state.runtimeHint ?? 'fast';
     renderEditorOrigin(matchingExample ? 'matching example' : 'custom draft');
-    renderShareSummary();
-    updateIssueLink();
+    void refreshDerivedLinks();
     persistDraftDebounced();
   });
+
+  editor.focus();
 }

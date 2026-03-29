@@ -1,25 +1,22 @@
-# JSON Pretty Printer
-# -------------------
-# What this script does:
-#   Parses an inline JSON string and prints a nicely formatted version so it is
-#   easier to inspect.
-#
-# Which variables to edit:
-#   - raw_json
-#
-# Assumptions and limitations:
-#   - Input must already be valid JSON.
-#   - The tool only prints text output.
-#
-# Expected output shape:
-#   Indented JSON text in the terminal panel.
+# JSON pretty-printer
+# Edit: raw_json_text by pasting a compact JSON string into the triple quotes.
+# Assumptions: the input is valid JSON text and should be displayed readably.
+# Limitations: this script only prints text and does not validate against schemas.
+# Output: prints nicely indented JSON and a short structural summary.
 
 import json
 
-raw_json = '{"name":"freeCodeCamp","topics":["python","algorithms","data"],"launched":2014}'
+raw_json_text = """
+{"name":"Ada","languages":["Python","JavaScript"],"active":true,"projects":3}
+""".strip()
 
-parsed = json.loads(raw_json)
+parsed = json.loads(raw_json_text)
+formatted = json.dumps(parsed, indent=2, sort_keys=True)
 
-print("Formatted JSON")
-print("--------------")
-print(json.dumps(parsed, indent=2, sort_keys=True))
+print("Pretty JSON")
+print("-" * 11)
+print(formatted)
+print("")
+print(f"Top-level type: {type(parsed).__name__}")
+print(f"Top-level keys: {len(parsed)}")
+

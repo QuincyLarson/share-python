@@ -1,36 +1,34 @@
-import { describe, expect, it } from 'vitest';
-import {
-  classifyExecutionError,
-  detectBlockedModuleImport,
-  detectUnsupportedInput,
-} from '../../src/classify.js';
+import test from 'node:test';
+import assert from 'node:assert/strict';
 
-describe('runtime classification', () => {
-  it('flags input usage as unsupported in v1', () => {
-    expect(detectUnsupportedInput('name = input("What is your name? ")')).toBe(true);
+import { classifyRuntimeFailure } from '../../src/classify.js';
+
+test('module import failures offer the full runtime retry path', () => {
+  const result = classifyRuntimeFailure({
+    name: 'ModuleNotFoundError',
+    message: "No module named 'zoneinfo'"
   });
 
-  it('finds obviously blocked modules in a static scan', () => {
-    expect(detectBlockedModuleImport('import requests\nprint("hi")')).toBe('requests');
-  });
-
-  it('offers full runtime for likely missing standard-library modules', () => {
-    const result = classifyExecutionError({
-      name: 'ModuleNotFoundError',
-      message: "No module named 'zoneinfo'",
-    });
-
-    expect(result.offerFullRuntime).toBe(true);
-    expect(result.kind).toBe('missing-module');
-  });
-
-  it('does not offer full runtime for ordinary syntax mistakes', () => {
-    const result = classifyExecutionError({
-      name: 'SyntaxError',
-      message: 'invalid syntax',
-    });
-
-    expect(result.offerFullRuntime).toBe(false);
-    expect(result.kind).toBe('user-code-error');
-  });
+  assert.equal(result.shouldOfferFullRuntime, true);
+  assert.equal(result.reason, 'runtime_incompatibility');
 });
+
+test('ordinary syntax mistakes do not trigger full runtime retry', () => {
+  const result = classifyRuntimeFailure({
+    name: 'SyntaxError',
+    message: 'invalid syntax'
+  });
+
+  assert.equal(result.shouldOfferFullRuntime, false);
+  assert.equal(result.reason, 'ordinary_bug');
+});
+
+test('disallowed network/package cases stay blocked', () => {
+  const result = classifyRuntimeFailure({
+    message: 'requests is not available in this environment'
+  });
+
+  assert.equal(result.shouldOfferFullRuntime, false);
+  assert.equal(result.reason, 'disallowed_capability');
+});
+
