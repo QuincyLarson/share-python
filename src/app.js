@@ -2,16 +2,12 @@ import { APP_CONFIG, FOUNDATION_OUTPUT } from './config.js';
 import {
   EXAMPLES,
   filterExamples,
-  findExampleById,
   findMatchingExampleBySource,
+  getExampleById,
 } from './examples.js';
 import { buildIssueUrl } from './issue.js';
-import {
-  decodeShareFragment,
-  encodeShareFragment,
-  isShareUrlTooLong,
-} from './share.js';
-import { createDraftStorage, resolveInitialSource } from './storage.js';
+import { buildShareUrl, parseShareFragment } from './share.js';
+import { loadDraft, resolveInitialSource, saveDraft } from './storage.js';
 
 function debounce(fn, waitMs) {
   let timeoutId = null;
@@ -68,8 +64,8 @@ function buildExampleCard(example, onLoad) {
   return article;
 }
 
-function normalizeSource(source) {
-  return source.replace(/\r\n/g, '\n');
+function normalizeSource(sourceText) {
+  return sourceText.replace(/\r\n/g, '\n');
 }
 
 async function copyText(text) {
@@ -88,12 +84,6 @@ async function copyText(text) {
   textarea.remove();
 }
 
-function buildShareUrl(fragment) {
-  const shareUrl = new URL(window.location.href);
-  shareUrl.hash = fragment.startsWith('#') ? fragment.slice(1) : fragment;
-  return shareUrl.toString();
-}
-
 export async function createApp() {
   const editor = document.querySelector('#editor');
   const output = document.querySelector('#output');
@@ -109,28 +99,20 @@ export async function createApp() {
   const loadExampleButton = document.querySelector('#load-example-button');
   const clearOutputButton = document.querySelector('#clear-output-button');
 
-  const draftStorage = createDraftStorage(window.localStorage, APP_CONFIG.storageKey);
-  const defaultExample = findExampleById(APP_CONFIG.defaultExampleId) ?? EXAMPLES[0];
-  const fragmentState = await decodeShareFragment(window.location.hash);
-  const localDraft = draftStorage.load();
+  const defaultExample = getExampleById(APP_CONFIG.defaultExampleId) ?? EXAMPLES[0];
+  const fragmentState = parseShareFragment(window.location.hash, EXAMPLES);
+  const localDraft = loadDraft();
   const initialState = resolveInitialSource({
     fragmentState,
-    draftSource: localDraft,
-    defaultSource: defaultExample?.script ?? '',
-    findExampleById,
+    localDraft,
+    defaultExample,
   });
 
   const state = {
-    source: initialState.sourceText,
-    activeExampleId:
-      initialState.activeExampleId ??
-      findMatchingExampleBySource(initialState.sourceText)?.id ??
-      null,
-    runtimeHint: initialState.runtimeHint ?? defaultExample?.runtime ?? 'fast',
-    shareUrl: window.location.href,
-    issueUrl: reportIssueLink.href,
+    source: initialState.source,
+    exampleId: initialState.exampleId,
+    runtimeHint: initialState.runtimeHint ?? defaultExample.runtime ?? 'fast',
   };
-  let shareRefreshToken = 0;
 
   function renderOutput() {
     output.textContent = FOUNDATION_OUTPUT;
@@ -152,49 +134,37 @@ export async function createApp() {
   }
 
   function renderEditorOrigin(origin) {
-    const activeExample = state.activeExampleId ? findExampleById(state.activeExampleId) : null;
-    const matchingExample = findMatchingExampleBySource(state.source);
-    const example = activeExample ?? matchingExample;
-
-    if (example) {
-      const isExactMatch = normalizeSource(example.script) === normalizeSource(state.source);
+    const activeExample = state.exampleId ? getExampleById(state.exampleId) : null;
+    if (activeExample) {
+      const isExactMatch = normalizeSource(activeExample.source) === normalizeSource(state.source);
       editorOrigin.textContent = isExactMatch
-        ? `${origin} · ${example.title}`
-        : `${origin} · based on ${example.title}`;
+        ? `${origin} · ${activeExample.title}`
+        : `${origin} · based on ${activeExample.title}`;
       return;
     }
 
     editorOrigin.textContent = origin;
   }
 
-  async function refreshDerivedLinks() {
-    const refreshId = ++shareRefreshToken;
-    const matchingExample = findMatchingExampleBySource(state.source);
-    const fragment = await encodeShareFragment({
-      sourceText: state.source,
-      exampleId: matchingExample?.id ?? null,
+  function updateIssueLink() {
+    const shareState = buildShareUrl({
+      source: state.source,
       runtimeHint: state.runtimeHint,
+      examples: EXAMPLES,
     });
-    const shareUrl = buildShareUrl(fragment);
-    const activeExample = state.activeExampleId ? findExampleById(state.activeExampleId) : null;
+
+    const example = state.exampleId ? getExampleById(state.exampleId) : null;
     const isCustomScript =
-      !activeExample || normalizeSource(activeExample.script) !== normalizeSource(state.source);
-    const issueUrl = buildIssueUrl({
-      currentUrl: shareUrl,
-      example: activeExample,
+      !example || normalizeSource(example.source) !== normalizeSource(state.source);
+
+    reportIssueLink.href = buildIssueUrl({
+      currentUrl: shareState.url,
+      example,
       runtimeHint: state.runtimeHint,
       isCustomScript,
     });
 
-    if (refreshId !== shareRefreshToken) {
-      return;
-    }
-
-    state.shareUrl = shareUrl;
-    state.issueUrl = issueUrl;
-    reportIssueLink.href = issueUrl;
-
-    if (!matchingExample && isShareUrlTooLong(shareUrl, APP_CONFIG.maxShareUrlLength)) {
+    if (!shareState.isExamplePermalink && shareState.isTooLong) {
       shareSummary.textContent =
         'Copy share link will compress the current editor contents into the URL fragment. This link is long and may be unreliable to share.';
       return;
@@ -204,18 +174,23 @@ export async function createApp() {
   }
 
   function persistDraft() {
-    draftStorage.save(state.source);
+    saveDraft({
+      source: state.source,
+      exampleId: state.exampleId,
+      runtimeHint: state.runtimeHint,
+      savedAt: new Date().toISOString(),
+    });
   }
 
   const persistDraftDebounced = debounce(persistDraft, 250);
 
-  async function applySource(source, nextExampleId, origin) {
+  function applySource(source, nextExampleId, origin) {
     state.source = source;
-    state.activeExampleId = nextExampleId;
-    state.runtimeHint = nextExampleId ? findExampleById(nextExampleId)?.runtime ?? 'fast' : 'fast';
+    state.exampleId = nextExampleId;
+    state.runtimeHint = nextExampleId ? getExampleById(nextExampleId)?.runtime ?? 'fast' : 'fast';
     editor.value = source;
     renderEditorOrigin(origin);
-    await refreshDerivedLinks();
+    updateIssueLink();
     persistDraftDebounced();
   }
 
@@ -224,8 +199,8 @@ export async function createApp() {
     examplesList.replaceChildren(
       ...results.map((example) =>
         buildExampleCard(example, (exampleId) => {
-          const nextExample = findExampleById(exampleId);
-          applySource(nextExample.script, nextExample.id, 'example library');
+          const nextExample = getExampleById(exampleId);
+          applySource(nextExample.source, nextExample.id, 'example library');
           renderStatus(`Loaded ${nextExample.title}.`);
           examplesDialog.close();
         }),
@@ -237,9 +212,9 @@ export async function createApp() {
 
   editor.value = state.source;
   renderOutput();
-  renderEditorOrigin('loaded');
-  renderStatus(initialState.statusText);
-  await refreshDerivedLinks();
+  renderEditorOrigin(initialState.origin);
+  renderStatus(initialState.warning ?? 'Shell ready. Editing, examples, and share links are wired up.');
+  updateIssueLink();
 
   installTabBehavior(editor);
   renderExampleList();
@@ -256,14 +231,18 @@ export async function createApp() {
   });
 
   copyShareLinkButton.addEventListener('click', async () => {
+    const shareState = buildShareUrl({
+      source: state.source,
+      runtimeHint: state.runtimeHint,
+      examples: EXAMPLES,
+    });
+
     try {
-      await refreshDerivedLinks();
-      const matchingExample = findMatchingExampleBySource(state.source);
-      await copyText(state.shareUrl);
+      await copyText(shareState.url);
       renderStatus(
-        !matchingExample && isShareUrlTooLong(state.shareUrl, APP_CONFIG.maxShareUrlLength)
+        shareState.isTooLong
           ? 'Copied a long share link. Trim comments or pasted data if it feels unreliable.'
-          : matchingExample
+          : shareState.isExamplePermalink
             ? 'Copied a short example permalink.'
             : 'Copied a prefilled share link.',
       );
@@ -280,9 +259,10 @@ export async function createApp() {
   editor.addEventListener('input', () => {
     state.source = editor.value;
     const matchingExample = findMatchingExampleBySource(state.source);
+    state.exampleId = matchingExample?.id ?? null;
     state.runtimeHint = matchingExample?.runtime ?? state.runtimeHint ?? 'fast';
     renderEditorOrigin(matchingExample ? 'matching example' : 'custom draft');
-    void refreshDerivedLinks();
+    updateIssueLink();
     persistDraftDebounced();
   });
 

@@ -1,5 +1,19 @@
 [
   {
+    "id": "hello-runner",
+    "title": "Hello Runner",
+    "category": "Getting started",
+    "summary": "A tiny personalized script that makes the edit-and-rerun workflow obvious.",
+    "tags": ["starter", "basics", "print"],
+    "runtime": "fast",
+    "difficulty": "beginner",
+    "description": "The default landing example with a few editable constants and text-only output.",
+    "scriptPath": "examples/getting-started/hello-runner.py",
+    "issueContext": "Starter example for the default landing experience.",
+    "featured": true,
+    "checks": [{ "type": "includes", "value": "freeCodeCamp Python Runner" }]
+  },
+  {
     "id": "mortgage-payment",
     "title": "Mortgage payment calculator",
     "category": "Money & loans",
@@ -26,6 +40,20 @@
     "issueContext": "Initial curated example pack",
     "featured": true,
     "checks": [{ "type": "includes", "value": "Ending balance:" }]
+  },
+  {
+    "id": "timezone-deadline",
+    "title": "Time zone deadline converter",
+    "category": "Time & timezone",
+    "summary": "Translate a UTC deadline into a few local times without hidden logic.",
+    "tags": ["time", "timezone", "schedule"],
+    "runtime": "fast",
+    "difficulty": "beginner",
+    "description": "A simple meeting and deadline helper with explicit city offsets.",
+    "scriptPath": "examples/time/timezone-deadline.py",
+    "issueContext": "Time-zone example. Keep offsets explicit and note DST limitations.",
+    "featured": true,
+    "checks": [{ "type": "includes", "value": "Deadline by time zone" }]
   },
   {
     "id": "days-between-dates",
@@ -84,4 +112,3 @@
     "checks": [{ "type": "includes", "value": "Pace per mile:" }]
   }
 ]
-

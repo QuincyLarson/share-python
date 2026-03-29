@@ -1,20 +1,19 @@
-import test from 'node:test';
-import assert from 'node:assert/strict';
-
+import { describe, expect, it } from 'vitest';
 import { getByteLength, isSourceWithinLimit, truncateOutput } from '../../src/limits.js';
 
-test('byte length uses utf-8 semantics', () => {
-  assert.equal(getByteLength('plain ascii'), 11);
-  assert.equal(getByteLength('cafe'), 4);
-});
+describe('limit helpers', () => {
+  it('uses utf-8 byte counts', () => {
+    expect(getByteLength('plain ascii')).toBe(11);
+    expect(getByteLength('cafe')).toBe(4);
+  });
 
-test('source length checks use byte count rather than code units', () => {
-  assert.equal(isSourceWithinLimit('print("ok")', 32), true);
-  assert.equal(isSourceWithinLimit('x'.repeat(70), 64), false);
-});
+  it('checks source size using bytes rather than code units', () => {
+    expect(isSourceWithinLimit('print("ok")', 32)).toBe(true);
+    expect(isSourceWithinLimit('x'.repeat(70), 64)).toBe(false);
+  });
 
-test('output truncation preserves a visible sentinel', () => {
-  const output = truncateOutput('x'.repeat(80), 40);
-  assert.match(output, /output truncated/i);
+  it('adds a visible sentinel when truncating oversized output', () => {
+    const output = truncateOutput('x'.repeat(80), 40);
+    expect(output).toMatch(/output truncated/i);
+  });
 });
-

@@ -1,58 +1,55 @@
-import test from 'node:test';
-import assert from 'node:assert/strict';
-
+import { describe, expect, it } from 'vitest';
+import { EXAMPLES } from '../../src/examples.js';
 import { resolveInitialSource } from '../../src/storage.js';
 
-const examples = new Map([
-  [
-    'mortgage-payment',
-    {
-      id: 'mortgage-payment',
-      title: 'Mortgage payment calculator',
-      runtime: 'fast',
-      script: 'print("mortgage")'
-    }
-  ]
-]);
+describe('initial source resolution', () => {
+  it('prefers a share fragment over local draft data', () => {
+    const result = resolveInitialSource({
+      fragmentState: {
+        source: 'print("from share")',
+        exampleId: null,
+        runtimeHint: 'full',
+      },
+      localDraft: {
+        source: 'print("from local draft")',
+        exampleId: EXAMPLES[0].id,
+        runtimeHint: 'fast',
+      },
+      defaultExample: EXAMPLES[0],
+    });
 
-test('shared examples take precedence over local drafts', () => {
-  const result = resolveInitialSource({
-    fragmentState: { type: 'example', exampleId: 'mortgage-payment' },
-    draftSource: 'print("draft")',
-    defaultSource: 'print("default")',
-    findExampleById: (exampleId) => examples.get(exampleId) ?? null
+    expect(result.origin).toBe('shared code');
+    expect(result.source).toContain('from share');
   });
 
-  assert.equal(result.sourceText, 'print("mortgage")');
-  assert.equal(result.activeExampleId, 'mortgage-payment');
-  assert.equal(result.runtimeHint, 'fast');
-});
+  it('falls back to the default example when nothing else is present', () => {
+    const result = resolveInitialSource({
+      fragmentState: null,
+      localDraft: null,
+      defaultExample: EXAMPLES[0],
+    });
 
-test('decoded code payloads take precedence over local drafts', () => {
-  const result = resolveInitialSource({
-    fragmentState: {
-      type: 'code',
-      sourceText: 'print("shared")',
-      runtimeHint: 'full'
-    },
-    draftSource: 'print("draft")',
-    defaultSource: 'print("default")',
-    findExampleById: () => null
+    expect(result.origin).toBe('starter example');
+    expect(result.exampleId).toBe(EXAMPLES[0].id);
   });
 
-  assert.equal(result.sourceText, 'print("shared")');
-  assert.equal(result.runtimeHint, 'full');
-});
+  it('keeps a share-fragment warning when decode fails', () => {
+    const result = resolveInitialSource({
+      fragmentState: {
+        source: null,
+        exampleId: null,
+        runtimeHint: null,
+        error: 'Shared code could not be decoded.',
+      },
+      localDraft: {
+        source: 'print("local")',
+        exampleId: null,
+        runtimeHint: 'fast',
+      },
+      defaultExample: EXAMPLES[0],
+    });
 
-test('local drafts beat the default script when there is no fragment', () => {
-  const result = resolveInitialSource({
-    fragmentState: { type: 'empty' },
-    draftSource: 'print("draft")',
-    defaultSource: 'print("default")',
-    findExampleById: () => null
+    expect(result.origin).toBe('starter example');
+    expect(result.warning).toBe('Shared code could not be decoded.');
   });
-
-  assert.equal(result.sourceText, 'print("draft")');
-  assert.match(result.statusText, /Restored your last local draft/i);
 });
-

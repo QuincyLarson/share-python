@@ -12,11 +12,11 @@ export function truncateOutput(outputText, maxBytes) {
   }
 
   let truncated = outputText;
+  const suffix = '\n... output truncated ...';
 
-  while (getByteLength(`${truncated}\n… output truncated …`) > maxBytes) {
+  while (truncated && getByteLength(`${truncated}${suffix}`) > maxBytes) {
     truncated = truncated.slice(0, -1);
   }
 
-  return `${truncated}\n… output truncated …`;
+  return `${truncated}${suffix}`;
 }
-

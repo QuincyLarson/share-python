@@ -1,116 +1,115 @@
-export const SHARE_VERSION = '1';
+import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from 'lz-string';
+import { APP_CONFIG } from './config.js';
 
-export async function encodeShareFragment({ sourceText, exampleId = null, runtimeHint = null }) {
-  const params = new URLSearchParams();
+export const SHARE_VERSION = APP_CONFIG.shareVersion;
 
-  if (exampleId) {
-    params.set('ex', exampleId);
-  } else {
-    params.set('v', SHARE_VERSION);
-    params.set('code', await compressTextToBase64Url(sourceText));
-  }
-
-  if (runtimeHint) {
-    params.set('rt', runtimeHint);
-  }
-
-  return `#${params.toString()}`;
+function normalizeSource(sourceText) {
+  return sourceText.replace(/\r\n/g, '\n');
 }
 
-export async function decodeShareFragment(fragment) {
-  if (!fragment || fragment === '#') {
-    return { type: 'empty' };
-  }
+function sanitizeRuntimeHint(runtimeHint) {
+  return runtimeHint === 'fast' || runtimeHint === 'full' ? runtimeHint : null;
+}
 
-  const params = new URLSearchParams(fragment.startsWith('#') ? fragment.slice(1) : fragment);
-  const runtimeHint = params.get('rt');
+export function findMatchingExample(sourceText, examples) {
+  const normalizedSource = normalizeSource(sourceText);
+  return examples.find((example) => normalizeSource(example.source) === normalizedSource) ?? null;
+}
 
-  if (params.has('ex')) {
-    return {
-      type: 'example',
-      exampleId: params.get('ex'),
-      runtimeHint
-    };
-  }
+export function buildShareFragment({ source, runtimeHint, examples }) {
+  const matchingExample = findMatchingExample(source, examples);
+  const params = new URLSearchParams();
 
-  if (params.has('code')) {
-    try {
-      return {
-        type: 'code',
-        sourceText: await decompressBase64UrlToText(params.get('code')),
-        runtimeHint,
-        version: params.get('v') ?? SHARE_VERSION
-      };
-    } catch {
-      return {
-        type: 'error',
-        reason: 'decode_failed'
-      };
+  if (matchingExample) {
+    params.set('ex', matchingExample.id);
+    if (runtimeHint && runtimeHint !== matchingExample.runtime) {
+      params.set('rt', runtimeHint);
+    }
+  } else {
+    params.set('v', SHARE_VERSION);
+    params.set('code', compressToEncodedURIComponent(source));
+    const validRuntimeHint = sanitizeRuntimeHint(runtimeHint);
+    if (validRuntimeHint) {
+      params.set('rt', validRuntimeHint);
     }
   }
 
-  return { type: 'empty' };
+  const fragment = params.toString();
+  return {
+    fragment,
+    isExamplePermalink: Boolean(matchingExample),
+    isTooLong: fragment.length > APP_CONFIG.maxShareUrlLength,
+  };
+}
+
+export function buildShareUrl({ source, runtimeHint, examples, location = window.location }) {
+  const { fragment, isExamplePermalink, isTooLong } = buildShareFragment({
+    source,
+    runtimeHint,
+    examples,
+  });
+
+  return {
+    fragment,
+    isExamplePermalink,
+    isTooLong,
+    url: `${location.origin}${location.pathname}#${fragment}`,
+  };
 }
 
 export function isShareUrlTooLong(url, maxLength) {
   return url.length > maxLength;
 }
 
-async function compressTextToBase64Url(text) {
-  const encoded = new TextEncoder().encode(text);
-  const bytes =
-    typeof CompressionStream === 'function'
-      ? await streamBytes(encoded, new CompressionStream('gzip'))
-      : encoded;
-
-  return toBase64Url(bytes);
-}
-
-async function decompressBase64UrlToText(encodedText) {
-  const bytes = fromBase64Url(encodedText);
-  const decompressed =
-    typeof DecompressionStream === 'function'
-      ? await streamBytes(bytes, new DecompressionStream('gzip'))
-      : bytes;
-
-  return new TextDecoder().decode(decompressed);
-}
-
-async function streamBytes(bytes, stream) {
-  const writer = stream.writable.getWriter();
-  await writer.write(bytes);
-  await writer.close();
-  const buffer = await new Response(stream.readable).arrayBuffer();
-  return new Uint8Array(buffer);
-}
-
-function toBase64Url(bytes) {
-  if (typeof Buffer !== 'undefined') {
-    return Buffer.from(bytes).toString('base64url');
+export function parseShareFragment(fragment, examples) {
+  const rawFragment = fragment.startsWith('#') ? fragment.slice(1) : fragment;
+  if (!rawFragment) {
+    return null;
   }
 
-  let binary = '';
+  const params = new URLSearchParams(rawFragment);
+  const runtimeHint = sanitizeRuntimeHint(params.get('rt'));
 
-  for (const byte of bytes) {
-    binary += String.fromCharCode(byte);
+  if (params.has('ex')) {
+    const exampleId = params.get('ex');
+    const example = examples.find((entry) => entry.id === exampleId);
+    if (!example) {
+      return {
+        source: null,
+        exampleId: null,
+        runtimeHint,
+        error: `Shared example "${exampleId}" was not found. Loaded the starter script instead.`,
+      };
+    }
+
+    return {
+      source: example.source,
+      exampleId: example.id,
+      runtimeHint: runtimeHint ?? example.runtime,
+      error: null,
+    };
   }
 
-  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+  const version = params.get('v');
+  const code = params.get('code');
+  if (!version || !code) {
+    return null;
+  }
+
+  const decompressed = decompressFromEncodedURIComponent(code);
+  if (typeof decompressed !== 'string') {
+    return {
+      source: null,
+      exampleId: null,
+      runtimeHint,
+      error: 'This shared link could not be decoded. Loaded the starter script instead.',
+    };
+  }
+
+  return {
+    source: decompressed,
+    exampleId: null,
+    runtimeHint,
+    error: null,
+  };
 }
-
-function fromBase64Url(value) {
-  if (typeof Buffer !== 'undefined') {
-    return new Uint8Array(Buffer.from(value, 'base64url'));
-  }
-
-  const padded = value.replace(/-/g, '+').replace(/_/g, '/').padEnd(Math.ceil(value.length / 4) * 4, '=');
-  const binary = atob(padded);
-  const bytes = new Uint8Array(binary.length);
-
-  for (let index = 0; index < binary.length; index += 1) {
-    bytes[index] = binary.charCodeAt(index);
-  }
-
-  return bytes;
-}
-

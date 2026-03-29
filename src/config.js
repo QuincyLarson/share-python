@@ -6,7 +6,7 @@ export const APP_CONFIG = {
   donationUrl: 'https://www.freecodecamp.org/donate/',
   storageKey: 'share-python:draft:v1',
   shareVersion: '1',
-  defaultExampleId: 'mortgage-payment',
+  defaultExampleId: 'hello-runner',
   maxSourceSize: 64 * 1024,
   maxShareUrlLength: 2000,
   maxOutputBytes: 256 * 1024,

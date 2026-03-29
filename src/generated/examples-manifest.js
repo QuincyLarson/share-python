@@ -1,5 +1,29 @@
 export const examples = [
   {
+    "id": "hello-runner",
+    "title": "Hello Runner",
+    "category": "Getting started",
+    "summary": "A tiny personalized script that makes the edit-and-rerun workflow obvious.",
+    "tags": [
+      "starter",
+      "basics",
+      "print"
+    ],
+    "runtime": "fast",
+    "difficulty": "beginner",
+    "description": "The default landing example with a few editable constants and text-only output.",
+    "scriptPath": "examples/getting-started/hello-runner.py",
+    "issueContext": "Starter example for the default landing experience.",
+    "featured": true,
+    "checks": [
+      {
+        "type": "includes",
+        "value": "freeCodeCamp Python Runner"
+      }
+    ],
+    "script": "# Hello Runner\n# ------------\n# What this script does:\n#   Prints a short personalized summary so learners can see the edit-and-rerun\n#   workflow without needing any extra concepts.\n#\n# Which variables to edit:\n#   - name\n#   - hours_saved\n#   - favorite_task\n#\n# Assumptions and limitations:\n#   - This is just a starter example.\n#   - It only prints text.\n#\n# Expected output shape:\n#   A few lines of terminal-style text.\n\nname = \"Avery\"\nhours_saved = 3.5\nfavorite_task = \"budget planning\"\n\nprint(\"freeCodeCamp Python Runner\")\nprint(\"---------------------------\")\nprint(f\"Hello, {name}!\")\nprint(f\"This tiny script says you saved about {hours_saved:.1f} hours.\")\nprint(f\"Next up: use Python to automate more of your {favorite_task}.\")\n"
+  },
+  {
     "id": "mortgage-payment",
     "title": "Mortgage payment calculator",
     "category": "Money & loans",
@@ -46,6 +70,30 @@ export const examples = [
       }
     ],
     "script": "# Compound interest calculator\n# Edit: starting_balance, monthly_contribution, annual_rate, and years.\n# Assumptions: contributions happen monthly and the annual rate compounds monthly.\n# Limitations: this is a simple growth estimate and does not model taxes or fees.\n# Output: prints the ending balance and total contributions over the full period.\n\nstarting_balance = 12000\nmonthly_contribution = 350\nannual_rate = 5.5\nyears = 18\n\nmonthly_rate = (annual_rate / 100) / 12\nmonths = years * 12\nbalance = starting_balance\n\nfor _ in range(months):\n    balance = (balance + monthly_contribution) * (1 + monthly_rate)\n\ntotal_contributions = starting_balance + monthly_contribution * months\ngrowth = balance - total_contributions\n\nprint(\"Compound growth estimate\")\nprint(\"-\" * 25)\nprint(f\"Ending balance:     ${balance:,.2f}\")\nprint(f\"Total contributions:${total_contributions:,.2f}\")\nprint(f\"Investment growth:  ${growth:,.2f}\")\n\n"
+  },
+  {
+    "id": "timezone-deadline",
+    "title": "Time zone deadline converter",
+    "category": "Time & timezone",
+    "summary": "Translate a UTC deadline into a few local times without hidden logic.",
+    "tags": [
+      "time",
+      "timezone",
+      "schedule"
+    ],
+    "runtime": "fast",
+    "difficulty": "beginner",
+    "description": "A simple meeting and deadline helper with explicit city offsets.",
+    "scriptPath": "examples/time/timezone-deadline.py",
+    "issueContext": "Time-zone example. Keep offsets explicit and note DST limitations.",
+    "featured": true,
+    "checks": [
+      {
+        "type": "includes",
+        "value": "Deadline by time zone"
+      }
+    ],
+    "script": "# Time Zone Deadline Converter\n# ----------------------------\n# What this script does:\n#   Converts a single deadline into a few local times so a team can coordinate\n#   without mental math.\n#\n# Which variables to edit:\n#   - deadline_utc\n#   - offsets\n#\n# Assumptions and limitations:\n#   - Offsets are fixed hours from UTC in this beginner-friendly example.\n#   - Daylight Saving Time adjustments are not handled automatically.\n#\n# Expected output shape:\n#   One line per city showing the converted local time.\n\nfrom datetime import datetime, timedelta\n\ndeadline_utc = \"2026-04-15 20:00\"\noffsets = {\n    \"Chicago\": -5,\n    \"New York\": -4,\n    \"London\": 1,\n    \"Berlin\": 2,\n    \"Tokyo\": 9,\n}\n\ndeadline = datetime.strptime(deadline_utc, \"%Y-%m-%d %H:%M\")\n\nprint(\"Deadline by time zone\")\nprint(\"---------------------\")\nprint(f\"UTC deadline: {deadline.strftime('%Y-%m-%d %H:%M')}\")\n\nfor city, offset in offsets.items():\n    local_time = deadline + timedelta(hours=offset)\n    print(f\"{city:10} {local_time.strftime('%Y-%m-%d %H:%M')}\")\n"
   },
   {
     "id": "days-between-dates",

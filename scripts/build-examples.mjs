@@ -1,4 +1,4 @@
-import { readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -94,6 +94,7 @@ export async function buildExamplesManifest({
   const manifest = validateExampleDefinitions(definitions, scriptMap);
   const fileContents = `export const examples = ${JSON.stringify(manifest, null, 2)};\n`;
 
+  await mkdir(path.dirname(outputPath), { recursive: true });
   await writeFile(outputPath, fileContents, 'utf8');
   return manifest;
 }
@@ -105,4 +106,3 @@ if (isMainModule) {
   const manifest = await buildExamplesManifest();
   console.log(`Generated ${manifest.length} examples into ${path.relative(repoRoot, generatedManifestPath)}.`);
 }
-
