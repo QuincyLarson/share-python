@@ -6,19 +6,143 @@
     <title>freeCodeCamp Python Runner</title>
     <meta
       name="description"
-      content="Run small Python scripts in your browser with a fast, text-only editor and output pane."
+      content="Run small Python scripts in your browser with no sign-in, plain-text output, and shareable prefilled links."
     />
     <meta property="og:title" content="freeCodeCamp Python Runner" />
     <meta
       property="og:description"
-      content="A fast, browser-based Python runner for small utility scripts and learning examples."
+      content="A lightweight browser-based Python runner for practical text-only scripts."
     />
     <meta property="og:type" content="website" />
-    <meta name="theme-color" content="#121821" />
-    <link rel="icon" href="data:," />
-    <script type="module" src="/src/main.js"></script>
+    <meta property="og:url" content="https://share-python.pages.dev/" />
+    <link rel="license" href="/LICENSE" />
   </head>
   <body>
-    <div id="app"></div>
+    <div class="app-shell">
+      <header class="hero">
+        <div class="hero__copy">
+          <p class="hero__eyebrow">freeCodeCamp tool</p>
+          <h1>Run plain Python in your browser.</h1>
+          <p class="hero__lede">
+            Paste a script, tweak a few values, and share a prefilled link. The
+            execution worker lands in the next implementation slice.
+          </p>
+        </div>
+        <div class="hero__meta" aria-label="Product principles">
+          <p>Static hosting</p>
+          <p>Text-only output</p>
+          <p>No sign-in</p>
+        </div>
+      </header>
+
+      <main class="workspace" aria-label="Python runner">
+        <section class="toolbar" aria-label="Runner controls">
+          <div class="toolbar__group">
+            <button id="run-button" class="button button--primary" disabled>
+              Run
+            </button>
+            <button id="stop-button" class="button" disabled>Stop</button>
+            <button id="clear-output-button" class="button">Clear output</button>
+          </div>
+          <div class="toolbar__group">
+            <button id="load-example-button" class="button">Load example</button>
+            <button id="copy-share-link-button" class="button">
+              Copy share link
+            </button>
+            <a
+              id="report-issue-link"
+              class="button button--link"
+              href="https://github.com/QuincyLarson/share-python/issues/new"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Report issue
+            </a>
+          </div>
+        </section>
+
+        <div class="status-row" role="status" aria-live="polite">
+          <p id="status-message">
+            Shell ready. Editing, examples, and share links are wired up.
+          </p>
+          <p id="share-summary">Share links prefer short example permalinks.</p>
+        </div>
+
+        <div class="panes">
+          <section class="pane pane--editor" aria-labelledby="editor-heading">
+            <div class="pane__header">
+              <div>
+                <p class="pane__eyebrow">Editor</p>
+                <h2 id="editor-heading">Script</h2>
+              </div>
+              <p id="editor-origin" class="pane__detail">Loading starter…</p>
+            </div>
+            <label class="sr-only" for="editor">Python script editor</label>
+            <textarea
+              id="editor"
+              class="editor"
+              spellcheck="false"
+              aria-describedby="editor-help"
+            ></textarea>
+            <p id="editor-help" class="pane__hint">
+              Use the example picker for practical starter scripts, then edit
+              constants near the top and rerun when execution is wired in.
+            </p>
+          </section>
+
+          <section class="pane pane--output" aria-labelledby="output-heading">
+            <div class="pane__header">
+              <div>
+                <p class="pane__eyebrow">Output</p>
+                <h2 id="output-heading">Terminal</h2>
+              </div>
+              <p class="pane__detail">Worker protocol next</p>
+            </div>
+            <pre id="output" class="output" tabindex="0"></pre>
+            <div id="donation-cta" class="donation-card" hidden>
+              <p>Did this save you time? Support freeCodeCamp.</p>
+              <a
+                class="button button--primary button--small"
+                href="https://www.freecodecamp.org/donate/"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Donate
+              </a>
+            </div>
+          </section>
+        </div>
+      </main>
+
+      <footer class="footer">
+        <p>
+          Browser-only scripting for educational and utility use. No hosted code
+          storage. Outputs are provided as-is.
+        </p>
+      </footer>
+    </div>
+
+    <dialog id="examples-dialog" class="examples-dialog" aria-labelledby="examples-title">
+      <form method="dialog" class="examples-dialog__header">
+        <div>
+          <p class="pane__eyebrow">Examples</p>
+          <h2 id="examples-title">Load a practical script</h2>
+        </div>
+        <button class="button" value="cancel">Close</button>
+      </form>
+
+      <label class="sr-only" for="example-search">Search examples</label>
+      <input
+        id="example-search"
+        class="examples-dialog__search"
+        type="search"
+        placeholder="Search money, time, JSON…"
+      />
+
+      <p id="example-count" class="examples-dialog__count"></p>
+      <div id="examples-list" class="examples-list" role="list"></div>
+    </dialog>
+
+    <script type="module" src="/src/main.js"></script>
   </body>
 </html>

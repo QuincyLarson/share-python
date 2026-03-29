@@ -1,116 +1,274 @@
-import { appConfig } from './config.js';
-import { createStore } from './state.js';
+import { APP_CONFIG, FOUNDATION_OUTPUT } from './config.js';
+import { getExampleById, EXAMPLES } from './examples.js';
+import { buildIssueUrl } from './issue.js';
+import { buildShareUrl, findMatchingExample, parseShareFragment } from './share.js';
+import { loadDraft, resolveInitialSource, saveDraft } from './storage.js';
 
-const shellActions = {
-  run: 'Execution lands in the next slice.',
-  stop: 'Worker termination lands with the runtime slice.',
-  examples: 'Example browsing lands with the manifest slice.',
-  share: 'Share-link generation lands with the state slice.'
-};
+function debounce(fn, waitMs) {
+  let timeoutId = null;
 
-export function createApp(root) {
-  const store = createStore({
-    outputText: appConfig.outputPlaceholder,
-    statusText: 'Shell ready. Runtime wiring is not in this commit.'
+  return (...args) => {
+    window.clearTimeout(timeoutId);
+    timeoutId = window.setTimeout(() => fn(...args), waitMs);
+  };
+}
+
+function installTabBehavior(textarea) {
+  textarea.addEventListener('keydown', (event) => {
+    if (event.key !== 'Tab') {
+      return;
+    }
+
+    event.preventDefault();
+    const { selectionStart, selectionEnd, value } = textarea;
+    const nextValue = `${value.slice(0, selectionStart)}    ${value.slice(selectionEnd)}`;
+    textarea.value = nextValue;
+    textarea.selectionStart = textarea.selectionEnd = selectionStart + 4;
+    textarea.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+}
+
+function buildExampleCard(example, onLoad) {
+  const article = document.createElement('article');
+  article.className = 'example-card';
+  article.setAttribute('role', 'listitem');
+
+  const category = document.createElement('p');
+  category.className = 'example-card__category';
+  category.textContent = `${example.category} · ${example.runtime}`;
+
+  const title = document.createElement('h3');
+  title.className = 'example-card__title';
+  title.textContent = example.title;
+
+  const summary = document.createElement('p');
+  summary.className = 'example-card__summary';
+  summary.textContent = example.summary;
+
+  const tags = document.createElement('p');
+  tags.className = 'example-card__tags';
+  tags.textContent = example.tags.map((tag) => `#${tag}`).join(' ');
+
+  const action = document.createElement('button');
+  action.className = 'button button--primary button--small';
+  action.type = 'button';
+  action.textContent = 'Load example';
+  action.addEventListener('click', () => onLoad(example.id));
+
+  article.append(category, title, summary, tags, action);
+  return article;
+}
+
+function filterExamples(query) {
+  const normalizedQuery = query.trim().toLowerCase();
+  if (!normalizedQuery) {
+    return EXAMPLES;
+  }
+
+  return EXAMPLES.filter((example) => {
+    const haystack = [
+      example.title,
+      example.category,
+      example.summary,
+      example.description,
+      ...example.tags,
+    ]
+      .join(' ')
+      .toLowerCase();
+
+    return haystack.includes(normalizedQuery);
+  });
+}
+
+function normalizeSource(source) {
+  return source.replace(/\r\n/g, '\n');
+}
+
+async function copyText(text) {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(text);
+    return;
+  }
+
+  const textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.setAttribute('readonly', 'readonly');
+  textarea.className = 'sr-only';
+  document.body.append(textarea);
+  textarea.select();
+  document.execCommand('copy');
+  textarea.remove();
+}
+
+export function createApp() {
+  const editor = document.querySelector('#editor');
+  const output = document.querySelector('#output');
+  const statusMessage = document.querySelector('#status-message');
+  const shareSummary = document.querySelector('#share-summary');
+  const editorOrigin = document.querySelector('#editor-origin');
+  const examplesDialog = document.querySelector('#examples-dialog');
+  const examplesList = document.querySelector('#examples-list');
+  const exampleSearch = document.querySelector('#example-search');
+  const exampleCount = document.querySelector('#example-count');
+  const reportIssueLink = document.querySelector('#report-issue-link');
+  const copyShareLinkButton = document.querySelector('#copy-share-link-button');
+  const loadExampleButton = document.querySelector('#load-example-button');
+  const clearOutputButton = document.querySelector('#clear-output-button');
+
+  const defaultExample = getExampleById(APP_CONFIG.defaultExampleId) ?? EXAMPLES[0];
+  const fragmentState = parseShareFragment(window.location.hash, EXAMPLES);
+  const localDraft = loadDraft();
+  const initialState = resolveInitialSource({
+    fragmentState,
+    localDraft,
+    defaultExample,
   });
 
-  root.innerHTML = `
-    <main class="shell">
-      <section class="hero" aria-labelledby="app-title">
-        <p class="eyebrow">${appConfig.eyebrow}</p>
-        <div class="hero-row">
-          <div>
-            <h1 id="app-title">${appConfig.title}</h1>
-            <p class="intro">${appConfig.intro}</p>
-          </div>
-          <aside class="status-card" aria-label="Implementation status">
-            <span class="status-label">Current slice</span>
-            <strong>App shell and layout</strong>
-            <p>Execution, share links, examples, and deploy wiring are the next atomic commits.</p>
-          </aside>
-        </div>
-      </section>
+  const state = {
+    source: initialState.source,
+    exampleId: initialState.exampleId,
+    runtimeHint: initialState.runtimeHint,
+  };
 
-      <section class="workspace" aria-label="Python runner">
-        <header class="toolbar">
-          <div class="toolbar-group" role="group" aria-label="Runner controls">
-            <button type="button" data-action="run">Run</button>
-            <button type="button" data-action="stop" class="ghost">Stop</button>
-            <button type="button" data-action="clear" class="ghost">Clear output</button>
-          </div>
-          <div class="toolbar-group" role="group" aria-label="Script controls">
-            <button type="button" data-action="examples" class="ghost">Load example</button>
-            <button type="button" data-action="share" class="ghost">Copy share link</button>
-            <a
-              class="ghost toolbar-link"
-              href="https://github.com/freeCodeCamp/freeCodeCamp/issues/new/choose"
-              target="_blank"
-              rel="noreferrer"
-            >
-              Report issue
-            </a>
-          </div>
-        </header>
+  function renderOutput() {
+    output.textContent = FOUNDATION_OUTPUT;
+  }
 
-        <div class="panes">
-          <section class="pane" aria-labelledby="editor-heading">
-            <div class="pane-header">
-              <h2 id="editor-heading">Editor</h2>
-              <span class="pane-meta">Plain text Python</span>
-            </div>
-            <label class="sr-only" for="editor">Python script editor</label>
-            <textarea
-              id="editor"
-              class="editor"
-              spellcheck="false"
-              autocapitalize="off"
-              autocomplete="off"
-              autocorrect="off"
-            ></textarea>
-          </section>
+  function renderStatus(message) {
+    statusMessage.textContent = message;
+  }
 
-          <section class="pane" aria-labelledby="output-heading">
-            <div class="pane-header">
-              <h2 id="output-heading">Output</h2>
-              <span class="pane-meta">Terminal-style text</span>
-            </div>
-            <pre class="output" data-output></pre>
-          </section>
-        </div>
-      </section>
+  function renderShareSummary() {
+    const matchingExample = findMatchingExample(state.source, EXAMPLES);
+    if (matchingExample) {
+      shareSummary.textContent = `Copy share link will use the short example permalink for ${matchingExample.title}.`;
+      return;
+    }
 
-      <footer class="footer">
-        <p>${appConfig.footerNote}</p>
-        <p class="status-line" role="status" aria-live="polite" data-status></p>
-      </footer>
-    </main>
-  `;
+    shareSummary.textContent =
+      'Copy share link will compress the current editor contents into the URL fragment.';
+  }
 
-  const editor = root.querySelector('#editor');
-  const output = root.querySelector('[data-output]');
-  const status = root.querySelector('[data-status]');
+  function renderEditorOrigin(origin) {
+    const matchingExample = state.exampleId ? getExampleById(state.exampleId) : null;
+    if (matchingExample) {
+      editorOrigin.textContent = `${origin} · ${matchingExample.title}`;
+      return;
+    }
 
-  editor.value = appConfig.defaultScript;
+    editorOrigin.textContent = origin;
+  }
 
-  store.subscribe((state) => {
-    output.textContent = state.outputText;
-    status.textContent = state.statusText;
-  });
-
-  root.querySelector('[data-action="clear"]').addEventListener('click', () => {
-    store.setState({
-      outputText: '',
-      statusText: 'Output cleared.'
+  function updateIssueLink() {
+    const shareState = buildShareUrl({
+      source: state.source,
+      runtimeHint: state.runtimeHint,
+      examples: EXAMPLES,
     });
-  });
 
-  for (const [action, message] of Object.entries(shellActions)) {
-    const button = root.querySelector(`[data-action="${action}"]`);
+    const example = getExampleById(state.exampleId);
+    const isCustomScript = !example || normalizeSource(example.source) !== normalizeSource(state.source);
 
-    button.addEventListener('click', () => {
-      store.setState({
-        statusText: message
-      });
+    reportIssueLink.href = buildIssueUrl({
+      currentUrl: shareState.url,
+      example,
+      runtimeHint: state.runtimeHint,
+      isCustomScript,
     });
   }
+
+  function persistDraft() {
+    saveDraft({
+      source: state.source,
+      exampleId: state.exampleId,
+      runtimeHint: state.runtimeHint,
+      savedAt: new Date().toISOString(),
+    });
+  }
+
+  const persistDraftDebounced = debounce(persistDraft, 250);
+
+  function applySource(source, nextExampleId, origin) {
+    state.source = source;
+    state.exampleId = nextExampleId;
+    state.runtimeHint = nextExampleId ? getExampleById(nextExampleId)?.runtime ?? 'fast' : 'fast';
+    editor.value = source;
+    renderEditorOrigin(origin);
+    renderShareSummary();
+    updateIssueLink();
+    persistDraftDebounced();
+  }
+
+  function renderExampleList(query = '') {
+    const results = filterExamples(query);
+    examplesList.replaceChildren(
+      ...results.map((example) =>
+        buildExampleCard(example, (exampleId) => {
+          const nextExample = getExampleById(exampleId);
+          applySource(nextExample.source, nextExample.id, 'example library');
+          renderStatus(`Loaded ${nextExample.title}.`);
+          examplesDialog.close();
+        }),
+      ),
+    );
+
+    exampleCount.textContent = `${results.length} example${results.length === 1 ? '' : 's'} available`;
+  }
+
+  editor.value = state.source;
+  renderOutput();
+  renderShareSummary();
+  renderEditorOrigin(initialState.origin);
+  updateIssueLink();
+
+  if (initialState.warning) {
+    renderStatus(initialState.warning);
+  }
+
+  installTabBehavior(editor);
+  renderExampleList();
+
+  loadExampleButton.addEventListener('click', () => {
+    exampleSearch.value = '';
+    renderExampleList();
+    examplesDialog.showModal();
+    exampleSearch.focus();
+  });
+
+  exampleSearch.addEventListener('input', () => {
+    renderExampleList(exampleSearch.value);
+  });
+
+  copyShareLinkButton.addEventListener('click', async () => {
+    const shareState = buildShareUrl({
+      source: state.source,
+      runtimeHint: state.runtimeHint,
+      examples: EXAMPLES,
+    });
+
+    await copyText(shareState.url);
+    renderStatus(
+      shareState.isTooLong
+        ? 'Copied a long share link. Trim comments or pasted data if it feels unreliable.'
+        : shareState.isExamplePermalink
+          ? 'Copied a short example permalink.'
+          : 'Copied a prefilled share link.',
+    );
+  });
+
+  clearOutputButton.addEventListener('click', () => {
+    renderOutput();
+    renderStatus('Cleared the terminal panel.');
+  });
+
+  editor.addEventListener('input', () => {
+    state.source = editor.value;
+    const matchingExample = findMatchingExample(state.source, EXAMPLES);
+    state.exampleId = matchingExample?.id ?? null;
+    state.runtimeHint = matchingExample?.runtime ?? state.runtimeHint ?? 'fast';
+    renderEditorOrigin(matchingExample ? 'matching example' : 'custom draft');
+    renderShareSummary();
+    updateIssueLink();
+    persistDraftDebounced();
+  });
 }
