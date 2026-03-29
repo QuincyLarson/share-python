@@ -6,8 +6,9 @@
   "description": "A browser-based, static Python runner for freeCodeCamp.",
   "scripts": {
     "build:examples": "node scripts/build-examples.mjs",
-    "dev": "npm run build:examples && vite",
-    "build": "npm run build:examples && vite build",
+    "sync:runtimes": "node scripts/sync-runtimes.mjs",
+    "dev": "npm run build:examples && npm run sync:runtimes && vite",
+    "build": "npm run build:examples && npm run sync:runtimes && vite build",
     "preview": "vite preview",
     "test": "vitest",
     "test:run": "npm run build:examples && vitest run"

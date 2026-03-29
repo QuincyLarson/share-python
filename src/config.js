@@ -15,13 +15,8 @@ export const APP_CONFIG = {
 };
 
 export const FOUNDATION_OUTPUT = [
-  'Execution worker wiring lands in the next atomic commit.',
+  'Ready to run.',
   '',
-  'What is ready now:',
-  '- starter scripts and example picker',
-  '- local draft restore',
-  '- share-link encoding and decoding',
-  '- issue-report link generation',
-  '',
-  'No code from the URL fragment will run until you click Run.',
+  'Output from each run will appear here.',
+  'Shared scripts are prefills only and never autorun.',
 ].join('\n');

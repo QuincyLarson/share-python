@@ -251,6 +251,25 @@ button:disabled,
   white-space: pre-wrap;
 }
 
+.runtime-prompt {
+  display: grid;
+  gap: 0.85rem;
+  border: 1px solid rgba(15, 118, 110, 0.22);
+  border-radius: 1.2rem;
+  background: rgba(15, 118, 110, 0.08);
+  padding: 0.95rem 1rem;
+}
+
+.runtime-prompt p {
+  margin: 0;
+}
+
+.runtime-prompt__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
 .donation-card {
   display: flex;
   align-items: center;
@@ -344,7 +363,8 @@ button:disabled,
 
   .status-row,
   .pane__header,
-  .examples-dialog__header {
+  .examples-dialog__header,
+  .runtime-prompt__actions {
     flex-direction: column;
     align-items: flex-start;
   }

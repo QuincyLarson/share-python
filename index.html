@@ -28,8 +28,8 @@
           <p class="hero__eyebrow">freeCodeCamp tool</p>
           <h1>Run plain Python in your browser.</h1>
           <p class="hero__lede">
-            Paste a script, tweak a few values, and share a prefilled link. The
-            execution worker lands in the next implementation slice.
+            Paste a script, tweak a few values, run it in your browser, and
+            share a prefilled link without any sign-in or backend.
           </p>
         </div>
         <div class="hero__meta" aria-label="Product principles">
@@ -42,9 +42,7 @@
       <main class="workspace" aria-label="Python runner">
         <section class="toolbar" aria-label="Runner controls">
           <div class="toolbar__group">
-            <button id="run-button" class="button button--primary" disabled>
-              Run
-            </button>
+            <button id="run-button" class="button button--primary">Run</button>
             <button id="stop-button" class="button" disabled>Stop</button>
             <button id="clear-output-button" class="button">Clear output</button>
           </div>
@@ -90,7 +88,7 @@
             ></textarea>
             <p id="editor-help" class="pane__hint">
               Use the example picker for practical starter scripts, then edit
-              constants near the top and rerun when execution is wired in.
+              constants near the top and click Run.
             </p>
           </section>
 
@@ -100,9 +98,30 @@
                 <p class="pane__eyebrow">Output</p>
                 <h2 id="output-heading">Terminal</h2>
               </div>
-              <p class="pane__detail">Worker protocol next</p>
+              <p class="pane__detail">Fast by default</p>
             </div>
             <pre id="output" class="output" tabindex="0"></pre>
+            <div id="runtime-prompt" class="runtime-prompt" hidden>
+              <p id="runtime-prompt-message">
+                This script may need Full Python. Retry with Full Python?
+              </p>
+              <div class="runtime-prompt__actions">
+                <button
+                  id="retry-full-runtime-button"
+                  class="button button--primary button--small"
+                  type="button"
+                >
+                  Retry with Full Python
+                </button>
+                <button
+                  id="dismiss-runtime-prompt-button"
+                  class="button button--small"
+                  type="button"
+                >
+                  Dismiss
+                </button>
+              </div>
+            </div>
             <div id="donation-cta" class="donation-card" hidden>
               <p>Did this save you time? Support freeCodeCamp.</p>
               <a
