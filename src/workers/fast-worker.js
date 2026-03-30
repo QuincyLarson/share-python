@@ -2,6 +2,11 @@ import { loadMicroPython } from '@micropython/micropython-webassembly-pyscript';
 
 let runtimePromise = null;
 
+function normalizeStreamText(text) {
+  const value = typeof text === 'string' ? text : String(text);
+  return value.endsWith('\n') ? value : `${value}\n`;
+}
+
 function serializeError(error) {
   return {
     name: error?.name ?? 'Error',
@@ -53,10 +58,10 @@ async function getRuntime(runtimeUrl) {
         );
       },
       stdout: (text) => {
-        postMessage({ type: 'stdout', runtime: 'fast', text });
+        postMessage({ type: 'stdout', runtime: 'fast', text: normalizeStreamText(text) });
       },
       stderr: (text) => {
-        postMessage({ type: 'stderr', runtime: 'fast', text });
+        postMessage({ type: 'stderr', runtime: 'fast', text: normalizeStreamText(text) });
       },
     });
   }

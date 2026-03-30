@@ -17,8 +17,26 @@ payment = loan_amount * (
 
 total_paid = payment * payment_count
 
-print("Mortgage payment estimate")
-print("-" * 28)
-print(f"Monthly payment: ${payment:,.2f}")
-print(f"Total of payments: ${total_paid:,.2f}")
 
+def format_currency(amount):
+    rounded_cents = int(round(amount * 100))
+    dollars = rounded_cents // 100
+    cents = rounded_cents % 100
+    groups = []
+
+    while dollars >= 1000:
+        groups.append("{:03d}".format(dollars % 1000))
+        dollars //= 1000
+
+    groups.append(str(dollars))
+    return "${}.{:02d}".format(",".join(reversed(groups)), cents)
+
+
+lines = [
+    "Mortgage payment estimate",
+    "-" * 28,
+    "Monthly payment: " + format_currency(payment),
+    "Total of payments: " + format_currency(total_paid),
+]
+
+print("\n".join(lines))

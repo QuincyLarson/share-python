@@ -33,8 +33,6 @@
               Run (control + enter)
             </button>
             <button id="stop-button" class="button" type="button" disabled>Stop</button>
-            <button id="clear-output-button" class="button" type="button">Clear output</button>
-            <button id="copy-output-button" class="button" type="button">Copy output</button>
             <button id="copy-share-link-button" class="button" type="button">Copy link</button>
             <a
               id="report-issue-link"
@@ -93,14 +91,22 @@
               </div>
             </div>
             <div id="donation-cta" class="donation-card" hidden>
-              <p>Did this save you time? Support freeCodeCamp.</p>
+              <div class="donation-card__copy">
+                <button id="clear-output-button" class="button button--small" type="button">
+                  Clear
+                </button>
+                <button id="copy-output-button" class="button button--small" type="button">
+                  Copy
+                </button>
+                <p>Did this save you time?</p>
+              </div>
               <a
                 class="button button--primary button--small"
                 href="https://www.freecodecamp.org/donate/"
                 target="_blank"
                 rel="noreferrer"
               >
-                Donate
+                Donate to freeCodeCamp
               </a>
             </div>
           </section>

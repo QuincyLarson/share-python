@@ -182,6 +182,28 @@ test('runs the time zone library example in Fast Python', async ({ page }) => {
   });
 });
 
+test('formats the mortgage example output with commas and line breaks', async ({ page }) => {
+  await gotoApp(page);
+
+  await page.locator('#load-example-button').click();
+  await page.locator('#example-search').fill('mortgage');
+
+  const exampleCard = page.locator('.example-card').filter({ hasText: 'Mortgage payment calculator' });
+  await exampleCard.getByRole('button', { name: 'Load' }).click();
+  await page.locator('#run-button').click();
+
+  await expect
+    .poll(() => page.locator('#output').textContent(), { timeout: 30_000 })
+    .toContain('Monthly payment: $2,001.08\nTotal of payments: $720,389.12');
+
+  await expect(page.locator('#output')).toContainText('Total of payments: $720,389.12', {
+    timeout: 30_000,
+  });
+  await expect(page.locator('#output')).toContainText('Mortgage payment estimate', {
+    timeout: 30_000,
+  });
+});
+
 test('stops a long-running Fast Python script', async ({ page }) => {
   await gotoApp(page);
   await fillEditor(page, 'while True:\n    pass');
