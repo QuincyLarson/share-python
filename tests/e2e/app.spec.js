@@ -10,6 +10,8 @@ const FAST_SMOKE_SCRIPT = [
   'print(f"hello from {name}")',
 ].join('\n');
 
+const LONG_OUTPUT_LINE_SCRIPT = 'print("wrap-me-" * 80)';
+
 const FULL_RUNTIME_STDLIB_SCRIPT = [
   'from __future__ import annotations',
   '',
@@ -142,6 +144,22 @@ test('runs a script in Fast Python, supports local select-all, copies output, an
 
   await assertFoundationOutput(page);
   await expect(page.locator('#donation-cta')).toBeHidden();
+});
+
+test('wraps long output lines inside the output pane', async ({ page }) => {
+  await gotoApp(page);
+  await fillEditor(page, LONG_OUTPUT_LINE_SCRIPT);
+  await page.locator('#run-button').click();
+
+  await expect(page.locator('#output')).toContainText('wrap-me-wrap-me-', {
+    timeout: 30_000,
+  });
+
+  await expect
+    .poll(() =>
+      page.locator('#output').evaluate((element) => element.scrollWidth <= element.clientWidth + 1),
+    )
+    .toBe(true);
 });
 
 test('copies a share link that restores editor contents without autorun', async ({

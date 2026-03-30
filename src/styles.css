@@ -314,8 +314,11 @@ button:disabled,
   margin: 0;
   align-self: start;
   height: 100%;
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
   white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
   background: var(--terminal-bg);
 }
 
