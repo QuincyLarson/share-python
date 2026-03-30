@@ -26,12 +26,43 @@ offsets = {
     "Tokyo": 9,
 }
 
-deadline = datetime.strptime(deadline_utc, "%Y-%m-%d %H:%M")
+date_part, time_part = deadline_utc.split(" ")
+year_text, month_text, day_text = date_part.split("-")
+hour_text, minute_text = time_part.split(":")
+
+deadline = datetime(
+    int(year_text),
+    int(month_text),
+    int(day_text),
+    int(hour_text),
+    int(minute_text),
+)
+
+
+def format_datetime(value):
+    return "{:04d}-{:02d}-{:02d} {:02d}:{:02d}".format(
+        value.year,
+        value.month,
+        value.day,
+        value.hour,
+        value.minute,
+    )
+
+
+def pad_right(text, width):
+    padding = width - len(text)
+    if padding <= 0:
+        return text
+    return text + (" " * padding)
+
+
+deadline_label = format_datetime(deadline)
 
 print("Deadline by time zone")
 print("---------------------")
-print(f"UTC deadline: {deadline.strftime('%Y-%m-%d %H:%M')}")
+print("UTC deadline: " + deadline_label)
 
 for city, offset in offsets.items():
     local_time = deadline + timedelta(hours=offset)
-    print(f"{city:10} {local_time.strftime('%Y-%m-%d %H:%M')}")
+    local_label = format_datetime(local_time)
+    print(pad_right(city, 10) + " " + local_label)

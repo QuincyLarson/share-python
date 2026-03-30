@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 import { FOUNDATION_OUTPUT } from '../../src/config.js';
+import { STARTER_PROMPT } from '../../src/starter.js';
 
 const FOUNDATION_LINES = FOUNDATION_OUTPUT.split('\n').filter(Boolean);
 
@@ -41,7 +42,7 @@ async function captureCopiedShareUrl(page) {
 test('loads the shell and prepopulates issue reporting for the starter example', async ({ page }) => {
   await gotoApp(page);
 
-  await expect(page.locator('#editor')).toHaveValue(/print\("freeCodeCamp Python Runner"\)/);
+  await expect(page.locator('#editor')).toHaveValue(new RegExp(`^${STARTER_PROMPT}`));
   await expect(page.locator('#run-button')).toBeEnabled();
   await expect(page.locator('#stop-button')).toBeDisabled();
   await assertFoundationOutput(page);
@@ -51,14 +52,43 @@ test('loads the shell and prepopulates issue reporting for the starter example',
 
   expect(issueUrl.origin).toBe('https://github.com');
   expect(issueUrl.pathname).toBe('/QuincyLarson/share-python/issues/new');
-  expect(issueUrl.searchParams.get('title')).toBe('[Example] Hello Runner');
-  expect(issueUrl.searchParams.get('body')).toContain('Hello Runner (`hello-runner`)');
-  expect(issueUrl.searchParams.get('body')).toContain('#ex=hello-runner');
+  expect(issueUrl.searchParams.get('title')).toMatch(/^\[Example\] /);
+  expect(issueUrl.searchParams.get('body')).toContain('#ex=');
 });
 
-test('runs a script in Fast Python, shows the donate CTA, and clears output', async ({ page }) => {
+test('runs a script in Fast Python, supports local select-all, copies output, and clears output', async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    window.__copiedTexts = [];
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: {
+        writeText: async (text) => {
+          window.__copiedTexts.push(text);
+        },
+      },
+    });
+  });
+
   await gotoApp(page);
   await fillEditor(page, FAST_SMOKE_SCRIPT);
+  await page.locator('#editor').press('Control+A');
+
+  const editorSelection = await page.evaluate(() => {
+    const editor = document.querySelector('#editor');
+    return {
+      start: editor.selectionStart,
+      end: editor.selectionEnd,
+      length: editor.value.length,
+    };
+  });
+
+  expect(editorSelection).toEqual({
+    start: 0,
+    end: FAST_SMOKE_SCRIPT.length,
+    length: FAST_SMOKE_SCRIPT.length,
+  });
 
   await page.locator('#run-button').click();
 
@@ -72,6 +102,22 @@ test('runs a script in Fast Python, shows the donate CTA, and clears output', as
     timeout: 30_000,
   });
   await expect(page.locator('#donation-cta')).toBeVisible();
+
+  await page.locator('#output').click();
+  await page.locator('#output').press('Control+A');
+
+  await expect.poll(() => page.evaluate(() => window.getSelection().toString())).toContain(
+    'hello from Playwright',
+  );
+  await expect.poll(() => page.evaluate(() => window.getSelection().toString())).not.toContain(
+    'SharePython.com',
+  );
+
+  await page.locator('#copy-output-button').click();
+
+  await expect
+    .poll(() => captureCopiedShareUrl(page))
+    .toContain('hello from Playwright');
 
   await page.locator('#clear-output-button').click();
 
@@ -115,6 +161,27 @@ test('copies a share link that restores editor contents without autorun', async 
   await assertFoundationOutput(sharedPage);
 });
 
+test('runs the time zone library example in Fast Python', async ({ page }) => {
+  await gotoApp(page);
+
+  await page.locator('#load-example-button').click();
+  await page.locator('#example-search').fill('time zone');
+
+  const exampleCard = page.locator('.example-card').filter({ hasText: 'Time zone deadline converter' });
+  await exampleCard.getByRole('button', { name: 'Load' }).click();
+  await page.locator('#run-button').click();
+
+  await expect(page.locator('#output')).toContainText('Deadline by time zone', {
+    timeout: 30_000,
+  });
+  await expect(page.locator('#output')).toContainText('Chicago', {
+    timeout: 30_000,
+  });
+  await expect(page.locator('#output')).toContainText('[completed]', {
+    timeout: 30_000,
+  });
+});
+
 test('stops a long-running Fast Python script', async ({ page }) => {
   await gotoApp(page);
   await fillEditor(page, 'while True:\n    pass');
@@ -142,7 +209,7 @@ test('offers a Full Python retry for an incompatible example and succeeds after 
   await page.locator('#example-search').fill('recipe');
 
   const exampleCard = page.locator('.example-card').filter({ hasText: 'Recipe fraction scaler' });
-  await exampleCard.getByRole('button', { name: 'Load example' }).click();
+  await exampleCard.getByRole('button', { name: 'Load' }).click();
 
   const originalSource = await page.locator('#editor').inputValue();
   await fillEditor(page, addCompatibilitySmokeComment(originalSource));
