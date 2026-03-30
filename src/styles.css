@@ -5,7 +5,6 @@
   --font-mono:
     Hack, "Hack ZeroSlash", "Cascadia Mono", "IBM Plex Mono", "SFMono-Regular", Menlo,
     monospace;
-  --page-width: 1180px;
   --space-1: 0.25rem;
   --space-2: 0.5rem;
   --space-3: 0.75rem;
@@ -184,8 +183,8 @@ button:disabled,
 }
 
 .app-shell {
-  width: min(100%, var(--page-width));
-  margin: 0 auto;
+  width: 100%;
+  margin: 0;
   min-height: 100svh;
   padding: var(--space-2);
   display: grid;
@@ -260,7 +259,7 @@ button:disabled,
 
 .panes {
   display: grid;
-  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--space-2);
   min-height: 0;
 }
@@ -307,6 +306,8 @@ button:disabled,
   min-height: 0;
   height: 100%;
   resize: none;
+  overflow: auto;
+  white-space: pre;
   background: var(--editor-bg);
 }
 
@@ -314,11 +315,8 @@ button:disabled,
   margin: 0;
   align-self: start;
   height: 100%;
-  overflow-y: auto;
-  overflow-x: hidden;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-  word-break: break-word;
+  overflow: auto;
+  white-space: pre;
   background: var(--terminal-bg);
 }
 

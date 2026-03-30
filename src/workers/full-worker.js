@@ -2,6 +2,11 @@ import { loadPyodide } from 'pyodide';
 
 let runtimePromise = null;
 
+function normalizeStreamText(text) {
+  const value = typeof text === 'string' ? text : String(text);
+  return value.endsWith('\n') ? value : `${value}\n`;
+}
+
 function serializeError(error) {
   return {
     name: error?.name ?? 'Error',
@@ -49,12 +54,12 @@ async function getRuntime(indexURL) {
     }).then((pyodide) => {
       pyodide.setStdout({
         batched: (text) => {
-          postMessage({ type: 'stdout', runtime: 'full', text });
+          postMessage({ type: 'stdout', runtime: 'full', text: normalizeStreamText(text) });
         },
       });
       pyodide.setStderr({
         batched: (text) => {
-          postMessage({ type: 'stderr', runtime: 'full', text });
+          postMessage({ type: 'stderr', runtime: 'full', text: normalizeStreamText(text) });
         },
       });
       pyodide.setStdin({

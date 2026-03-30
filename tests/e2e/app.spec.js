@@ -10,7 +10,21 @@ const FAST_SMOKE_SCRIPT = [
   'print(f"hello from {name}")',
 ].join('\n');
 
-const LONG_OUTPUT_LINE_SCRIPT = 'print("wrap-me-" * 80)';
+const LONG_LINE_TEXT = 'wrap-me-'.repeat(120);
+const LONG_OUTPUT_LINE_SCRIPT = `value = "${LONG_LINE_TEXT}"\nprint(value)`;
+
+const FULL_RUNTIME_MULTILINE_SCRIPT = [
+  'from __future__ import annotations',
+  '',
+  'from dataclasses import dataclass',
+  '',
+  '@dataclass',
+  'class ReportLine:',
+  '    label: str',
+  '',
+  'for line in [ReportLine("alpha"), ReportLine("beta"), ReportLine("gamma")]:',
+  '    print(line.label)',
+].join('\n');
 
 const FULL_RUNTIME_STDLIB_SCRIPT = [
   'from __future__ import annotations',
@@ -146,20 +160,59 @@ test('runs a script in Fast Python, supports local select-all, copies output, an
   await expect(page.locator('#donation-cta')).toBeHidden();
 });
 
-test('wraps long output lines inside the output pane', async ({ page }) => {
+test('keeps long code and output on one line with horizontal scrolling', async ({ page }) => {
   await gotoApp(page);
   await fillEditor(page, LONG_OUTPUT_LINE_SCRIPT);
+
+  const editorMetrics = await page.locator('#editor').evaluate((element) => ({
+    wrap: element.getAttribute('wrap'),
+    scrollWidth: element.scrollWidth,
+    clientWidth: element.clientWidth,
+  }));
+
+  expect(editorMetrics.wrap).toBe('off');
+  expect(editorMetrics.scrollWidth).toBeGreaterThan(editorMetrics.clientWidth);
+
   await page.locator('#run-button').click();
 
   await expect(page.locator('#output')).toContainText('wrap-me-wrap-me-', {
     timeout: 30_000,
   });
 
-  await expect
-    .poll(() =>
-      page.locator('#output').evaluate((element) => element.scrollWidth <= element.clientWidth + 1),
-    )
-    .toBe(true);
+  const outputMetrics = await page.locator('#output').evaluate((element) => ({
+    scrollWidth: element.scrollWidth,
+    clientWidth: element.clientWidth,
+    whiteSpace: window.getComputedStyle(element).whiteSpace,
+  }));
+
+  expect(outputMetrics.whiteSpace).toBe('pre');
+  expect(outputMetrics.scrollWidth).toBeGreaterThan(outputMetrics.clientWidth);
+});
+
+test('uses the full viewport width and keeps editor and output evenly split on wide screens', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1800, height: 900 });
+  await gotoApp(page);
+
+  const layoutMetrics = await page.evaluate(() => {
+    const shell = document.querySelector('.app-shell');
+    const panes = document.querySelector('.panes');
+    const editorPane = document.querySelector('.pane--editor');
+    const outputPane = document.querySelector('.pane--output');
+
+    return {
+      viewportWidth: window.innerWidth,
+      shellWidth: shell?.getBoundingClientRect().width ?? 0,
+      panesWidth: panes?.getBoundingClientRect().width ?? 0,
+      editorWidth: editorPane?.getBoundingClientRect().width ?? 0,
+      outputWidth: outputPane?.getBoundingClientRect().width ?? 0,
+    };
+  });
+
+  expect(layoutMetrics.shellWidth).toBeGreaterThanOrEqual(layoutMetrics.viewportWidth - 4);
+  expect(layoutMetrics.panesWidth).toBeGreaterThan(layoutMetrics.viewportWidth - 32);
+  expect(Math.abs(layoutMetrics.editorWidth - layoutMetrics.outputWidth)).toBeLessThanOrEqual(2);
 });
 
 test('copies a share link that restores editor contents without autorun', async ({
@@ -233,6 +286,18 @@ test('routes common stdlib imports straight to Full Python', async ({ page }) =>
     timeout: 45_000,
   });
   await expect(page.locator('#runtime-prompt')).toBeHidden();
+});
+
+test('preserves newline-separated output in Full Python', async ({ page }) => {
+  test.slow();
+
+  await gotoApp(page);
+  await fillEditor(page, FULL_RUNTIME_MULTILINE_SCRIPT);
+  await page.locator('#run-button').click();
+
+  await expect
+    .poll(() => page.locator('#output').textContent(), { timeout: 45_000 })
+    .toContain('alpha\nbeta\ngamma');
 });
 
 test('formats the mortgage example output with commas and line breaks', async ({ page }) => {
