@@ -12,6 +12,13 @@ import { validateSourcePolicy } from './policy.js';
 import { createRuntimeController } from './runtime.js';
 import { buildShareUrl, parseShareFragment } from './share.js';
 import { loadDraft, resolveInitialSource, saveDraft } from './storage.js';
+import {
+  getNextThemePreference,
+  getThemeToggleLabel,
+  loadThemePreference,
+  resolveThemePreference,
+  saveThemePreference,
+} from './theme.js';
 
 function debounce(fn, waitMs) {
   let timeoutId = null;
@@ -115,11 +122,14 @@ async function copyText(text) {
 }
 
 export async function createApp() {
+  const documentRoot = document.documentElement;
   const editor = document.querySelector('#editor');
   const output = document.querySelector('#output');
   const statusMessage = document.querySelector('#status-message');
   const shareSummary = document.querySelector('#share-summary');
   const editorOrigin = document.querySelector('#editor-origin');
+  const themeToggleButton = document.querySelector('#theme-toggle-button');
+  const themeColorMeta = document.querySelector('#theme-color-meta');
   const examplesDialog = document.querySelector('#examples-dialog');
   const examplesList = document.querySelector('#examples-list');
   const exampleSearch = document.querySelector('#example-search');
@@ -139,6 +149,10 @@ export async function createApp() {
   const defaultExample = getExampleById(APP_CONFIG.defaultExampleId) ?? EXAMPLES[0];
   const fragmentState = parseShareFragment(window.location.hash, EXAMPLES);
   const localDraft = loadDraft();
+  const systemThemeQuery =
+    typeof window.matchMedia === 'function'
+      ? window.matchMedia('(prefers-color-scheme: dark)')
+      : null;
   const initialState = resolveInitialSource({
     fragmentState,
     localDraft,
@@ -153,10 +167,43 @@ export async function createApp() {
     runtimeHint: initialState.runtimeHint ?? defaultExample.runtime ?? 'fast',
     runCount: 0,
     hadRunOutput: false,
+    themePreference: loadThemePreference(),
   };
 
   function renderStatus(message) {
     statusMessage.textContent = message;
+  }
+
+  function renderTheme() {
+    const resolvedTheme = resolveThemePreference(
+      state.themePreference,
+      systemThemeQuery?.matches ?? false,
+    );
+
+    if (state.themePreference === 'system') {
+      documentRoot.removeAttribute('data-theme');
+    } else {
+      documentRoot.dataset.theme = resolvedTheme;
+    }
+
+    if (themeToggleButton) {
+      const nextThemePreference = getNextThemePreference(state.themePreference);
+      themeToggleButton.textContent = getThemeToggleLabel(state.themePreference);
+      themeToggleButton.title = 'Cycle theme mode: auto, dark, light.';
+      themeToggleButton.setAttribute(
+        'aria-label',
+        `${getThemeToggleLabel(state.themePreference)}. Click to switch to ${getThemeToggleLabel(
+          nextThemePreference,
+        ).replace('Theme: ', '')}.`,
+      );
+    }
+
+    if (themeColorMeta) {
+      themeColorMeta.setAttribute(
+        'content',
+        resolvedTheme === 'dark' ? '#0a0a23' : '#f5f6f7',
+      );
+    }
   }
 
   function renderShareSummary() {
@@ -393,6 +440,7 @@ export async function createApp() {
   }
 
   editor.value = state.source;
+  renderTheme();
   clearOutputPanel();
   renderEditorOrigin(initialState.origin);
   renderStatus(initialState.warning ?? 'Shell ready. Editing, examples, and runtime controls are wired up.');
@@ -457,6 +505,14 @@ export async function createApp() {
     setRuntimePrompt('');
   });
 
+  if (themeToggleButton) {
+    themeToggleButton.addEventListener('click', () => {
+      state.themePreference = getNextThemePreference(state.themePreference);
+      saveThemePreference(state.themePreference);
+      renderTheme();
+    });
+  }
+
   editor.addEventListener('input', () => {
     state.source = editor.value;
     const matchingExample = findMatchingExampleBySource(state.source);
@@ -482,6 +538,20 @@ export async function createApp() {
       runtimeController.stop('escape');
     }
   });
+
+  if (systemThemeQuery) {
+    const handleThemeChange = () => {
+      if (state.themePreference === 'system') {
+        renderTheme();
+      }
+    };
+
+    if (typeof systemThemeQuery.addEventListener === 'function') {
+      systemThemeQuery.addEventListener('change', handleThemeChange);
+    } else if (typeof systemThemeQuery.addListener === 'function') {
+      systemThemeQuery.addListener(handleThemeChange);
+    }
+  }
 
   editor.focus();
 }

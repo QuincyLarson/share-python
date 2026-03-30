@@ -18,7 +18,7 @@
       content="A lightweight browser-based Python runner for practical text-only scripts."
     />
     <meta property="og:type" content="website" />
-    <meta name="theme-color" content="#17323b" />
+    <meta id="theme-color-meta" name="theme-color" content="#f5f6f7" />
     <link rel="license" href="./LICENSE" />
   </head>
   <body>
@@ -26,16 +26,27 @@
       <header class="hero">
         <div class="hero__copy">
           <p class="hero__eyebrow">freeCodeCamp tool</p>
-          <h1>Run plain Python in your browser.</h1>
+          <div class="hero__heading">
+            <h1>Python Runner</h1>
+            <div class="hero__signals" aria-label="Product principles">
+              <p>Static</p>
+              <p>Text-only</p>
+              <p>No sign-in</p>
+            </div>
+          </div>
           <p class="hero__lede">
-            Paste a script, tweak a few values, run it in your browser, and
-            share a prefilled link without any sign-in or backend.
+            Paste, edit, run, and share practical Python scripts with plain
+            text output and no backend.
           </p>
         </div>
-        <div class="hero__meta" aria-label="Product principles">
-          <p>Static hosting</p>
-          <p>Text-only output</p>
-          <p>No sign-in</p>
+        <div class="hero__actions">
+          <button
+            id="theme-toggle-button"
+            class="button button--small"
+            type="button"
+          >
+            Theme: Auto
+          </button>
         </div>
       </header>
 

@@ -5,6 +5,7 @@ export const APP_CONFIG = {
   issueBaseUrl: 'https://github.com/QuincyLarson/share-python/issues/new',
   donationUrl: 'https://www.freecodecamp.org/donate/',
   storageKey: 'share-python:draft:v1',
+  themeStorageKey: 'share-python:theme:v1',
   shareVersion: '1',
   defaultExampleId: 'hello-runner',
   maxSourceSize: 64 * 1024,
