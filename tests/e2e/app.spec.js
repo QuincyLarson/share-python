@@ -26,6 +26,20 @@ const FULL_RUNTIME_MULTILINE_SCRIPT = [
   '    print(line.label)',
 ].join('\n');
 
+const FULL_RUNTIME_RERUN_FIRST_SCRIPT = [
+  'from __future__ import annotations',
+  'from dataclasses import dataclass',
+  '',
+  'print("first run")',
+].join('\n');
+
+const FULL_RUNTIME_RERUN_SECOND_SCRIPT = [
+  'from __future__ import annotations',
+  'from dataclasses import dataclass',
+  '',
+  'print("second run")',
+].join('\n');
+
 const FULL_RUNTIME_STDLIB_SCRIPT = [
   'from __future__ import annotations',
   '',
@@ -158,6 +172,31 @@ test('runs a script in Fast Python, supports local select-all, copies output, an
 
   await assertFoundationOutput(page);
   await expect(page.locator('#donation-cta')).toBeHidden();
+});
+
+test('reruns edited scripts and replaces the previous output', async ({ page }) => {
+  await gotoApp(page);
+  await fillEditor(page, FULL_RUNTIME_RERUN_FIRST_SCRIPT);
+  await page.locator('#run-button').click();
+
+  await expect(page.locator('#output')).toContainText('Run 1 · Full Python', {
+    timeout: 45_000,
+  });
+  await expect(page.locator('#output')).toContainText('first run', {
+    timeout: 45_000,
+  });
+
+  await fillEditor(page, FULL_RUNTIME_RERUN_SECOND_SCRIPT);
+  await page.locator('#run-button').click();
+
+  await expect(page.locator('#output')).toContainText('Run 2 · Full Python', {
+    timeout: 45_000,
+  });
+  await expect(page.locator('#output')).toContainText('second run', {
+    timeout: 45_000,
+  });
+  await expect(page.locator('#output')).not.toContainText('first run');
+  await expect(page.locator('#output')).not.toContainText('Run 1 · Full Python');
 });
 
 test('keeps long code and output on one line with horizontal scrolling', async ({ page }) => {

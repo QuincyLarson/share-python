@@ -329,11 +329,15 @@ export async function createApp() {
     output.scrollTop = output.scrollHeight;
   }
 
-  function clearOutputPanel() {
-    output.textContent = FOUNDATION_OUTPUT;
+  function resetOutputPanel(nextText = FOUNDATION_OUTPUT) {
+    output.textContent = nextText;
     state.hadRunOutput = false;
     donationCta.hidden = true;
     output.scrollTop = 0;
+  }
+
+  function clearOutputPanel() {
+    resetOutputPanel(FOUNDATION_OUTPUT);
     setRuntimePrompt('');
   }
 
@@ -359,8 +363,7 @@ export async function createApp() {
   const runtimeController = createRuntimeController({
     onStart: ({ runtime }) => {
       state.runCount += 1;
-      state.hadRunOutput = false;
-      donationCta.hidden = true;
+      resetOutputPanel('');
       setRuntimePrompt('');
       setRunningState(true);
       appendOutput(formatRunHeader(state.runCount, runtime));
@@ -448,6 +451,7 @@ export async function createApp() {
     setRuntimePrompt('');
 
     if (!policyResult.ok) {
+      resetOutputPanel('');
       state.runCount += 1;
       appendOutput(`\n=== Run ${state.runCount} · blocked ===\n${policyResult.message}\n`);
       renderStatus(policyResult.message);
