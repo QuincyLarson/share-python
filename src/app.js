@@ -1,4 +1,4 @@
-import { classifyExecutionError } from './classify.js';
+import { classifyExecutionError, detectPreferredRuntime } from './classify.js';
 import { APP_CONFIG, FOUNDATION_OUTPUT } from './config.js';
 import {
   EXAMPLES,
@@ -202,10 +202,29 @@ export async function createApp() {
 
   const fullRuntimeMemo = new Set();
 
+  function resolveRuntimeHint(source, exampleId = null, persistedRuntimeHint = null) {
+    const exampleRuntime = exampleId ? getExampleById(exampleId)?.runtime ?? null : null;
+
+    if (
+      persistedRuntimeHint === 'full' ||
+      exampleRuntime === 'full' ||
+      detectPreferredRuntime(source) === 'full' ||
+      fullRuntimeMemo.has(source)
+    ) {
+      return 'full';
+    }
+
+    return exampleRuntime ?? persistedRuntimeHint ?? 'fast';
+  }
+
   const state = {
     source: initialState.source,
     exampleId: initialState.exampleId,
-    runtimeHint: initialState.runtimeHint ?? defaultExample.runtime ?? 'fast',
+    runtimeHint: resolveRuntimeHint(
+      initialState.source,
+      initialState.exampleId,
+      initialState.runtimeHint ?? defaultExample.runtime ?? 'fast',
+    ),
     runCount: 0,
     hadRunOutput: false,
     themePreference: loadThemePreference(),
@@ -328,7 +347,7 @@ export async function createApp() {
       return forceRuntime;
     }
 
-    if (state.runtimeHint === 'full' || fullRuntimeMemo.has(state.source)) {
+    if (resolveRuntimeHint(state.source, state.exampleId, state.runtimeHint) === 'full') {
       return 'full';
     }
 
@@ -416,11 +435,7 @@ export async function createApp() {
   function applySource(source, nextExampleId) {
     state.source = source;
     state.exampleId = nextExampleId;
-    state.runtimeHint = nextExampleId
-      ? getExampleById(nextExampleId)?.runtime ?? 'fast'
-      : fullRuntimeMemo.has(source)
-        ? 'full'
-        : 'fast';
+    state.runtimeHint = resolveRuntimeHint(source, nextExampleId);
     editor.value = source;
     updateIssueLink();
     persistDraftDebounced();
@@ -538,7 +553,7 @@ export async function createApp() {
     state.source = editor.value;
     const matchingExample = findMatchingExampleBySource(state.source);
     state.exampleId = matchingExample?.id ?? null;
-    state.runtimeHint = matchingExample?.runtime ?? (fullRuntimeMemo.has(state.source) ? 'full' : 'fast');
+    state.runtimeHint = resolveRuntimeHint(state.source, state.exampleId);
     updateIssueLink();
     persistDraftDebounced();
   });

@@ -10,9 +10,28 @@ const FAST_SMOKE_SCRIPT = [
   'print(f"hello from {name}")',
 ].join('\n');
 
-function addCompatibilitySmokeComment(source) {
-  return `${source}\n# Playwright compatibility smoke test`;
-}
+const FULL_RUNTIME_STDLIB_SCRIPT = [
+  'from __future__ import annotations',
+  '',
+  'from dataclasses import dataclass',
+  'from typing import Optional',
+  'import math',
+  '',
+  '@dataclass',
+  'class Scenario:',
+  '    label: str',
+  '    amount: float',
+  '    note: Optional[str] = None',
+  '',
+  'result = Scenario("sqrt", math.sqrt(81), "stdlib smoke test")',
+  'print(result)',
+].join('\n');
+
+const DYNAMIC_FULL_RUNTIME_SCRIPT = [
+  'module_name = "fractions"',
+  'fractions = __import__(module_name)',
+  'print(fractions.Fraction(3, 2))',
+].join('\n');
 
 async function gotoApp(page, fragment = '') {
   await page.goto(fragment ? `/#${fragment}` : '/');
@@ -182,6 +201,22 @@ test('runs the time zone library example in Fast Python', async ({ page }) => {
   });
 });
 
+test('routes common stdlib imports straight to Full Python', async ({ page }) => {
+  test.slow();
+
+  await gotoApp(page);
+  await fillEditor(page, FULL_RUNTIME_STDLIB_SCRIPT);
+  await page.locator('#run-button').click();
+
+  await expect(page.locator('#output')).toContainText('Run 1 · Full Python', {
+    timeout: 45_000,
+  });
+  await expect(page.locator('#output')).toContainText('Scenario(label=', {
+    timeout: 45_000,
+  });
+  await expect(page.locator('#runtime-prompt')).toBeHidden();
+});
+
 test('formats the mortgage example output with commas and line breaks', async ({ page }) => {
   await gotoApp(page);
 
@@ -219,22 +254,13 @@ test('stops a long-running Fast Python script', async ({ page }) => {
   await expect(page.locator('#stop-button')).toBeDisabled();
 });
 
-test('offers a Full Python retry for an incompatible example and succeeds after retry', async ({
+test('offers a Full Python retry for a runtime mismatch and succeeds after retry', async ({
   page,
 }) => {
   test.slow();
 
   await gotoApp(page);
-
-  await page.locator('#load-example-button').click();
-  await expect(page.locator('#examples-dialog')).toBeVisible();
-  await page.locator('#example-search').fill('recipe');
-
-  const exampleCard = page.locator('.example-card').filter({ hasText: 'Recipe fraction scaler' });
-  await exampleCard.getByRole('button', { name: 'Load' }).click();
-
-  const originalSource = await page.locator('#editor').inputValue();
-  await fillEditor(page, addCompatibilitySmokeComment(originalSource));
+  await fillEditor(page, DYNAMIC_FULL_RUNTIME_SCRIPT);
   await page.locator('#run-button').click();
 
   await expect(page.locator('#output')).toContainText('Run 1 · Fast Python', {
@@ -249,10 +275,7 @@ test('offers a Full Python retry for an incompatible example and succeeds after 
   await expect(page.locator('#output')).toContainText('Run 2 · Full Python', {
     timeout: 45_000,
   });
-  await expect(page.locator('#output')).toContainText('Scaled ingredient list', {
-    timeout: 45_000,
-  });
-  await expect(page.locator('#output')).toContainText('flour (cups)', {
+  await expect(page.locator('#output')).toContainText('3/2', {
     timeout: 45_000,
   });
   await expect(page.locator('#output')).toContainText('[completed]', {

@@ -10,12 +10,15 @@ const FAST_RUNTIME_ONLY_DENYLIST = new Set([
 ]);
 
 const FULL_RUNTIME_CANDIDATE_MODULES = new Set([
+  '__future__',
+  'dataclasses',
   'datetime',
   'decimal',
   'fractions',
   'pathlib',
   'statistics',
   'textwrap',
+  'typing',
   'zoneinfo',
 ]);
 
@@ -31,17 +34,49 @@ export function detectUnsupportedInput(source) {
   return /\binput\s*\(/.test(source);
 }
 
-export function detectBlockedModuleImport(source) {
-  const matches = source.matchAll(/^\s*(?:from|import)\s+([a-zA-Z0-9_\.]+)/gm);
+function collectImportedRootModules(source) {
+  const modules = [];
+  const lines = source.split(/\r?\n/);
 
-  for (const match of matches) {
-    const rootModule = match[1].split('.')[0];
+  for (const line of lines) {
+    const importMatch = line.match(/^\s*import\s+(.+)$/);
+    if (importMatch) {
+      for (const specifier of importMatch[1].split(',')) {
+        const moduleName = specifier.trim().split(/\s+as\s+/i)[0];
+        if (moduleName) {
+          modules.push(moduleName.split('.')[0]);
+        }
+      }
+      continue;
+    }
+
+    const fromMatch = line.match(/^\s*from\s+([a-zA-Z0-9_\.]+)\s+import\b/);
+    if (fromMatch) {
+      modules.push(fromMatch[1].split('.')[0]);
+    }
+  }
+
+  return modules;
+}
+
+export function detectBlockedModuleImport(source) {
+  for (const rootModule of collectImportedRootModules(source)) {
     if (FAST_RUNTIME_ONLY_DENYLIST.has(rootModule)) {
       return rootModule;
     }
   }
 
   return null;
+}
+
+export function detectPreferredRuntime(source) {
+  for (const rootModule of collectImportedRootModules(source)) {
+    if (FULL_RUNTIME_CANDIDATE_MODULES.has(rootModule)) {
+      return 'full';
+    }
+  }
+
+  return 'fast';
 }
 
 export function classifyExecutionError(errorLike) {

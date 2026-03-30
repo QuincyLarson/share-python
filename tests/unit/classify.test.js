@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   classifyExecutionError,
   detectBlockedModuleImport,
+  detectPreferredRuntime,
   detectUnsupportedInput,
 } from '../../src/classify.js';
 
@@ -12,6 +13,21 @@ describe('runtime classification', () => {
 
   it('finds obviously blocked modules in a static scan', () => {
     expect(detectBlockedModuleImport('import requests\nprint("hi")')).toBe('requests');
+  });
+
+  it('prefers Full Python for common stdlib imports that MicroPython misses', () => {
+    const source = [
+      'from __future__ import annotations',
+      'from dataclasses import dataclass',
+      'from typing import Optional',
+      'import math',
+    ].join('\n');
+
+    expect(detectPreferredRuntime(source)).toBe('full');
+  });
+
+  it('keeps Fast Python for lightweight imports that are already supported', () => {
+    expect(detectPreferredRuntime('import math\nprint(math.sqrt(81))')).toBe('fast');
   });
 
   it('offers full runtime for likely missing standard-library modules', () => {
