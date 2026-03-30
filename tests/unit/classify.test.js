@@ -24,6 +24,16 @@ describe('runtime classification', () => {
     expect(result.kind).toBe('missing-module');
   });
 
+  it('offers full runtime for MicroPython import errors that report missing modules', () => {
+    const result = classifyExecutionError({
+      name: 'ImportError',
+      message: "no module named 'fractions'",
+    });
+
+    expect(result.offerFullRuntime).toBe(true);
+    expect(result.kind).toBe('missing-module');
+  });
+
   it('does not offer full runtime for ordinary syntax mistakes', () => {
     const result = classifyExecutionError({
       name: 'SyntaxError',

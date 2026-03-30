@@ -270,6 +270,11 @@ button:disabled,
   gap: 0.75rem;
 }
 
+.runtime-prompt[hidden],
+.donation-card[hidden] {
+  display: none;
+}
+
 .donation-card {
   display: flex;
   align-items: center;

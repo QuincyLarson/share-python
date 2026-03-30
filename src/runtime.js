@@ -1,9 +1,11 @@
 import { APP_CONFIG } from './config.js';
 import { getByteLength } from './limits.js';
+import FastWorker from './workers/fast-worker.js?worker';
+import FullWorker from './workers/full-worker.js?worker';
 
-const workerUrls = {
-  fast: new URL('./workers/fast-worker.js', import.meta.url),
-  full: new URL('./workers/full-worker.js', import.meta.url),
+const workerConstructors = {
+  fast: FastWorker,
+  full: FullWorker,
 };
 
 export function createRuntimeController(handlers) {
@@ -22,7 +24,8 @@ export function createRuntimeController(handlers) {
     run({ source, runtime }) {
       this.stop('replaced');
 
-      const worker = new Worker(workerUrls[runtime], { type: 'module' });
+      const WorkerConstructor = workerConstructors[runtime];
+      const worker = new WorkerConstructor();
       const timeoutId = window.setTimeout(() => {
         worker.terminate();
         clearCurrentRun();
@@ -111,4 +114,3 @@ export function createRuntimeController(handlers) {
     },
   };
 }
-

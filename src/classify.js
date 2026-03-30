@@ -75,7 +75,7 @@ export function classifyExecutionError(errorLike) {
   }
 
   const missingModuleMatch = message.match(
-    /modulenotfounderror[:\s]+no module named ['"]([^'"]+)['"]/,
+    /(?:(?:modulenotfounderror|importerror)[:\s]+)?no module named ['"]([^'"]+)['"]/,
   );
   if (missingModuleMatch) {
     const missingModule = missingModuleMatch[1].split('.')[0];
