@@ -1,6 +1,6 @@
 export const APP_CONFIG = {
   appVersion: '0.1.0',
-  appName: 'freeCodeCamp Python Runner',
+  appName: 'SharePython.com',
   repoUrl: 'https://github.com/QuincyLarson/share-python',
   issueBaseUrl: 'https://github.com/QuincyLarson/share-python/issues/new',
   donationUrl: 'https://www.freecodecamp.org/donate/',
@@ -16,7 +16,5 @@ export const APP_CONFIG = {
 };
 
 export const FOUNDATION_OUTPUT = [
-  'Ready.',
-  '',
-  'Run output appears here.',
+  'Output appears here.',
 ].join('\n');

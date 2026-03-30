@@ -38,10 +38,14 @@ function blockNetwork() {
   };
 }
 
-async function getRuntime() {
+async function getRuntime(runtimeUrl) {
+  if (!runtimeUrl) {
+    throw new Error('Fast Python runtime URL is missing.');
+  }
+
   if (!runtimePromise) {
     runtimePromise = loadMicroPython({
-      url: new URL('../runtimes/fast/micropython.wasm', import.meta.url).toString(),
+      url: runtimeUrl,
       linebuffer: true,
       stdin: () => {
         throw new Error(
@@ -66,7 +70,7 @@ self.addEventListener('message', async (event) => {
   }
 
   try {
-    const runtime = await getRuntime();
+    const runtime = await getRuntime(event.data.assets?.fastWasmUrl);
     const restoreNetwork = blockNetwork();
 
     try {

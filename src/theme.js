@@ -1,20 +1,20 @@
 import { APP_CONFIG } from './config.js';
 
-const VALID_THEME_PREFERENCES = new Set(['system', 'light', 'dark']);
+const VALID_THEME_PREFERENCES = new Set(['light', 'dark']);
 
 function sanitizeThemePreference(themePreference) {
-  return VALID_THEME_PREFERENCES.has(themePreference) ? themePreference : 'system';
+  return VALID_THEME_PREFERENCES.has(themePreference) ? themePreference : null;
 }
 
 export function loadThemePreference(storage = globalThis.localStorage) {
   if (!storage) {
-    return 'system';
+    return null;
   }
 
   try {
     return sanitizeThemePreference(storage.getItem(APP_CONFIG.themeStorageKey));
   } catch {
-    return 'system';
+    return null;
   }
 }
 
@@ -26,7 +26,7 @@ export function saveThemePreference(themePreference, storage = globalThis.localS
   const sanitizedPreference = sanitizeThemePreference(themePreference);
 
   try {
-    if (sanitizedPreference === 'system') {
+    if (!sanitizedPreference) {
       storage.removeItem(APP_CONFIG.themeStorageKey);
       return;
     }
@@ -39,33 +39,15 @@ export function saveThemePreference(themePreference, storage = globalThis.localS
 
 export function resolveThemePreference(themePreference, systemPrefersDark = false) {
   const sanitizedPreference = sanitizeThemePreference(themePreference);
-  return sanitizedPreference === 'system'
-    ? systemPrefersDark
-      ? 'dark'
-      : 'light'
-    : sanitizedPreference;
+  return sanitizedPreference ?? (systemPrefersDark ? 'dark' : 'light');
 }
 
-export function getNextThemePreference(themePreference) {
-  const sanitizedPreference = sanitizeThemePreference(themePreference);
-
-  if (sanitizedPreference === 'system') {
-    return 'dark';
-  }
-
-  if (sanitizedPreference === 'dark') {
-    return 'light';
-  }
-
-  return 'system';
+export function getNextThemePreference(themePreference, systemPrefersDark = false) {
+  return resolveThemePreference(themePreference, systemPrefersDark) === 'dark' ? 'light' : 'dark';
 }
 
-export function getThemeToggleLabel(themePreference) {
-  const sanitizedPreference = sanitizeThemePreference(themePreference);
-
-  if (sanitizedPreference === 'system') {
-    return 'Theme: Auto';
-  }
-
-  return `Theme: ${sanitizedPreference === 'dark' ? 'Dark' : 'Light'}`;
+export function getThemeToggleLabel(themePreference, systemPrefersDark = false) {
+  return resolveThemePreference(themePreference, systemPrefersDark) === 'dark'
+    ? 'Night mode'
+    : 'Day mode';
 }

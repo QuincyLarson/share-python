@@ -5,12 +5,14 @@ import {
   filterExamples,
   findMatchingExampleBySource,
   getExampleById,
+  getRandomExample,
 } from './examples.js';
 import { buildIssueUrl } from './issue.js';
 import { truncateOutput } from './limits.js';
 import { validateSourcePolicy } from './policy.js';
 import { createRuntimeController } from './runtime.js';
 import { buildShareUrl, parseShareFragment } from './share.js';
+import { buildStarterSource, normalizeExampleSource } from './starter.js';
 import { loadDraft, resolveInitialSource, saveDraft } from './storage.js';
 import {
   getNextThemePreference,
@@ -44,6 +46,33 @@ function installTabBehavior(textarea) {
   });
 }
 
+function isSelectAllShortcut(event) {
+  return (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'a';
+}
+
+function installEditorSelectionBehavior(textarea) {
+  textarea.addEventListener('keydown', (event) => {
+    if (!isSelectAllShortcut(event)) {
+      return;
+    }
+
+    event.preventDefault();
+    textarea.selectionStart = 0;
+    textarea.selectionEnd = textarea.value.length;
+  });
+}
+
+function installOutputSelectionBehavior(element) {
+  element.addEventListener('keydown', (event) => {
+    if (!isSelectAllShortcut(event)) {
+      return;
+    }
+
+    event.preventDefault();
+    selectAllElementText(element);
+  });
+}
+
 function buildExampleCard(example, onLoad) {
   const article = document.createElement('article');
   article.className = 'example-card';
@@ -68,15 +97,11 @@ function buildExampleCard(example, onLoad) {
   const action = document.createElement('button');
   action.className = 'button button--primary button--small';
   action.type = 'button';
-  action.textContent = 'Load example';
+  action.textContent = 'Load';
   action.addEventListener('click', () => onLoad(example.id));
 
   article.append(category, title, summary, tags, action);
   return article;
-}
-
-function normalizeSource(sourceText) {
-  return sourceText.replace(/\r\n/g, '\n');
 }
 
 function formatRuntimeLabel(runtime) {
@@ -121,13 +146,19 @@ async function copyText(text) {
   textarea.remove();
 }
 
+function selectAllElementText(element) {
+  const selection = window.getSelection();
+  const range = document.createRange();
+  range.selectNodeContents(element);
+  selection?.removeAllRanges();
+  selection?.addRange(range);
+}
+
 export async function createApp() {
   const documentRoot = document.documentElement;
   const editor = document.querySelector('#editor');
   const output = document.querySelector('#output');
   const statusMessage = document.querySelector('#status-message');
-  const shareSummary = document.querySelector('#share-summary');
-  const editorOrigin = document.querySelector('#editor-origin');
   const themeToggleButton = document.querySelector('#theme-toggle-button');
   const themeColorMeta = document.querySelector('#theme-color-meta');
   const examplesDialog = document.querySelector('#examples-dialog');
@@ -136,6 +167,7 @@ export async function createApp() {
   const exampleCount = document.querySelector('#example-count');
   const reportIssueLink = document.querySelector('#report-issue-link');
   const copyShareLinkButton = document.querySelector('#copy-share-link-button');
+  const copyOutputButton = document.querySelector('#copy-output-button');
   const loadExampleButton = document.querySelector('#load-example-button');
   const clearOutputButton = document.querySelector('#clear-output-button');
   const runButton = document.querySelector('#run-button');
@@ -146,18 +178,27 @@ export async function createApp() {
   const retryFullRuntimeButton = document.querySelector('#retry-full-runtime-button');
   const dismissRuntimePromptButton = document.querySelector('#dismiss-runtime-prompt-button');
 
-  const defaultExample = getExampleById(APP_CONFIG.defaultExampleId) ?? EXAMPLES[0];
+  const defaultExample = getRandomExample() ?? getExampleById(APP_CONFIG.defaultExampleId) ?? EXAMPLES[0];
   const fragmentState = parseShareFragment(window.location.hash, EXAMPLES);
   const localDraft = loadDraft();
   const systemThemeQuery =
     typeof window.matchMedia === 'function'
       ? window.matchMedia('(prefers-color-scheme: dark)')
       : null;
-  const initialState = resolveInitialSource({
+  const resolvedInitialState = resolveInitialSource({
     fragmentState,
     localDraft,
     defaultExample,
   });
+  const shouldUseStarterExample = !fragmentState?.source && !fragmentState?.error && !localDraft?.source;
+  const initialState = shouldUseStarterExample
+    ? {
+        ...resolvedInitialState,
+        source: buildStarterSource(defaultExample.source),
+        exampleId: defaultExample.id,
+        runtimeHint: defaultExample.runtime,
+      }
+    : resolvedInitialState;
 
   const fullRuntimeMemo = new Set();
 
@@ -175,26 +216,28 @@ export async function createApp() {
   }
 
   function renderTheme() {
+    const systemPrefersDark = systemThemeQuery?.matches ?? false;
     const resolvedTheme = resolveThemePreference(
       state.themePreference,
-      systemThemeQuery?.matches ?? false,
+      systemPrefersDark,
     );
 
-    if (state.themePreference === 'system') {
+    if (!state.themePreference) {
       documentRoot.removeAttribute('data-theme');
     } else {
       documentRoot.dataset.theme = resolvedTheme;
     }
 
     if (themeToggleButton) {
-      const nextThemePreference = getNextThemePreference(state.themePreference);
-      themeToggleButton.textContent = getThemeToggleLabel(state.themePreference);
-      themeToggleButton.title = 'Cycle theme mode: auto, dark, light.';
+      const nextThemePreference = getNextThemePreference(state.themePreference, systemPrefersDark);
+      themeToggleButton.textContent = getThemeToggleLabel(state.themePreference, systemPrefersDark);
+      themeToggleButton.title = `Switch to ${nextThemePreference === 'dark' ? 'night' : 'day'} mode.`;
       themeToggleButton.setAttribute(
         'aria-label',
-        `${getThemeToggleLabel(state.themePreference)}. Click to switch to ${getThemeToggleLabel(
-          nextThemePreference,
-        ).replace('Theme: ', '')}.`,
+        `${getThemeToggleLabel(
+          state.themePreference,
+          systemPrefersDark,
+        )}. Click to switch to ${nextThemePreference === 'dark' ? 'night' : 'day'} mode.`,
       );
     }
 
@@ -206,40 +249,6 @@ export async function createApp() {
     }
   }
 
-  function renderShareSummary() {
-    const matchingExample = findMatchingExampleBySource(state.source);
-    if (matchingExample) {
-      shareSummary.textContent = `Short link for ${matchingExample.title}.`;
-      return;
-    }
-
-    const shareState = buildShareUrl({
-      source: state.source,
-      runtimeHint: state.runtimeHint,
-      examples: EXAMPLES,
-    });
-
-    if (!shareState.isExamplePermalink && shareState.isTooLong) {
-      shareSummary.textContent = 'Long share link. May be unreliable.';
-      return;
-    }
-
-    shareSummary.textContent = 'Link stores this script.';
-  }
-
-  function renderEditorOrigin(origin) {
-    const activeExample = state.exampleId ? getExampleById(state.exampleId) : null;
-    if (activeExample) {
-      const isExactMatch = normalizeSource(activeExample.source) === normalizeSource(state.source);
-      editorOrigin.textContent = isExactMatch
-        ? `${origin} · ${activeExample.title}`
-        : `${origin} · based on ${activeExample.title}`;
-      return;
-    }
-
-    editorOrigin.textContent = origin;
-  }
-
   function updateIssueLink() {
     const shareState = buildShareUrl({
       source: state.source,
@@ -249,7 +258,7 @@ export async function createApp() {
 
     const example = state.exampleId ? getExampleById(state.exampleId) : null;
     const isCustomScript =
-      !example || normalizeSource(example.source) !== normalizeSource(state.source);
+      !example || normalizeExampleSource(example.source) !== normalizeExampleSource(state.source);
 
     reportIssueLink.href = buildIssueUrl({
       currentUrl: shareState.url,
@@ -274,14 +283,14 @@ export async function createApp() {
       ...results.map((example) =>
         buildExampleCard(example, (exampleId) => {
           const nextExample = getExampleById(exampleId);
-          applySource(nextExample.source, nextExample.id, 'example library');
+          applySource(nextExample.source, nextExample.id);
           renderStatus(`Loaded ${nextExample.title}.`);
           examplesDialog.close();
         }),
       ),
     );
 
-    exampleCount.textContent = `${results.length} example${results.length === 1 ? '' : 's'} available`;
+    exampleCount.textContent = `${results.length} script${results.length === 1 ? '' : 's'}`;
   }
 
   function setRuntimePrompt(message = '') {
@@ -404,7 +413,7 @@ export async function createApp() {
     },
   });
 
-  function applySource(source, nextExampleId, origin) {
+  function applySource(source, nextExampleId) {
     state.source = source;
     state.exampleId = nextExampleId;
     state.runtimeHint = nextExampleId
@@ -413,8 +422,6 @@ export async function createApp() {
         ? 'full'
         : 'fast';
     editor.value = source;
-    renderEditorOrigin(origin);
-    renderShareSummary();
     updateIssueLink();
     persistDraftDebounced();
   }
@@ -444,13 +451,13 @@ export async function createApp() {
   editor.scrollTop = 0;
   renderTheme();
   clearOutputPanel();
-  renderEditorOrigin(initialState.origin);
-  renderStatus(initialState.warning ?? 'Ready.');
-  renderShareSummary();
+  renderStatus(initialState.warning ?? '');
   updateIssueLink();
   setRunningState(false);
 
   installTabBehavior(editor);
+  installEditorSelectionBehavior(editor);
+  installOutputSelectionBehavior(output);
   renderExampleList();
 
   loadExampleButton.addEventListener('click', () => {
@@ -485,6 +492,15 @@ export async function createApp() {
     }
   });
 
+  copyOutputButton.addEventListener('click', async () => {
+    try {
+      await copyText(output.textContent);
+      renderStatus('Copied output.');
+    } catch {
+      renderStatus('Could not copy the output automatically.');
+    }
+  });
+
   clearOutputButton.addEventListener('click', () => {
     clearOutputPanel();
     renderStatus('Cleared output.');
@@ -509,7 +525,10 @@ export async function createApp() {
 
   if (themeToggleButton) {
     themeToggleButton.addEventListener('click', () => {
-      state.themePreference = getNextThemePreference(state.themePreference);
+      state.themePreference = getNextThemePreference(
+        state.themePreference,
+        systemThemeQuery?.matches ?? false,
+      );
       saveThemePreference(state.themePreference);
       renderTheme();
     });
@@ -520,8 +539,6 @@ export async function createApp() {
     const matchingExample = findMatchingExampleBySource(state.source);
     state.exampleId = matchingExample?.id ?? null;
     state.runtimeHint = matchingExample?.runtime ?? (fullRuntimeMemo.has(state.source) ? 'full' : 'fast');
-    renderEditorOrigin(matchingExample ? 'matching example' : 'custom draft');
-    renderShareSummary();
     updateIssueLink();
     persistDraftDebounced();
   });
@@ -543,7 +560,7 @@ export async function createApp() {
 
   if (systemThemeQuery) {
     const handleThemeChange = () => {
-      if (state.themePreference === 'system') {
+      if (!state.themePreference) {
         renderTheme();
       }
     };

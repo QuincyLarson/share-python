@@ -1,13 +1,10 @@
 import { examples as generatedExamples } from './generated/examples-manifest.js';
+import { normalizeExampleSource } from './starter.js';
 
 export const EXAMPLES = generatedExamples.map((example) => ({
   ...example,
   source: example.script,
 }));
-
-function normalizeSource(sourceText) {
-  return sourceText.replace(/\r\n/g, '\n');
-}
 
 const examplesById = new Map(EXAMPLES.map((example) => [example.id, example]));
 
@@ -18,8 +15,17 @@ export function getExampleById(exampleId) {
 export const findExampleById = getExampleById;
 
 export function findMatchingExampleBySource(sourceText) {
-  const normalizedSource = normalizeSource(sourceText);
-  return EXAMPLES.find((example) => normalizeSource(example.source) === normalizedSource) ?? null;
+  const normalizedSource = normalizeExampleSource(sourceText);
+  return EXAMPLES.find((example) => normalizeExampleSource(example.source) === normalizedSource) ?? null;
+}
+
+export function getRandomExample(random = Math.random) {
+  if (EXAMPLES.length === 0) {
+    return null;
+  }
+
+  const index = Math.floor(random() * EXAMPLES.length);
+  return EXAMPLES[index] ?? EXAMPLES[0];
 }
 
 export function filterExamples(searchTerm = '') {

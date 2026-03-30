@@ -8,6 +8,13 @@ const workerConstructors = {
   full: FullWorker,
 };
 
+function buildRuntimeAssets(pageUrl = window.location.href) {
+  return {
+    fastWasmUrl: new URL('runtimes/fast/micropython.wasm', pageUrl).toString(),
+    fullIndexUrl: new URL('runtimes/full/', pageUrl).toString(),
+  };
+}
+
 export function createRuntimeController(handlers) {
   let currentRun = null;
 
@@ -94,6 +101,7 @@ export function createRuntimeController(handlers) {
       worker.postMessage({
         type: 'run',
         source,
+        assets: buildRuntimeAssets(),
       });
     },
 

@@ -7,12 +7,12 @@
       http-equiv="Content-Security-Policy"
       content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'none'; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-src 'none'; worker-src 'self'"
     />
-    <title>freeCodeCamp Python Runner</title>
+    <title>SharePython.com</title>
     <meta
       name="description"
       content="Run small Python scripts in your browser with no sign-in, plain-text output, and shareable prefilled links."
     />
-    <meta property="og:title" content="freeCodeCamp Python Runner" />
+    <meta property="og:title" content="SharePython.com" />
     <meta
       property="og:description"
       content="A lightweight browser-based Python runner for practical text-only scripts."
@@ -23,37 +23,18 @@
   </head>
   <body>
     <div class="app-shell">
-      <header class="hero">
-        <div class="hero__copy">
-          <div class="hero__heading">
-            <h1>Python Runner</h1>
-            <div class="hero__signals" aria-label="Product principles">
-              <p>Static</p>
-              <p>Shareable</p>
-              <p>Text-only</p>
-            </div>
-          </div>
+      <header class="nav-bar">
+        <div class="brand-lockup">
+          <h1>SharePython.com</h1>
         </div>
-        <div class="hero__actions">
-          <button
-            id="theme-toggle-button"
-            class="button button--small"
-            type="button"
-          >
-            Theme: Auto
-          </button>
-        </div>
-      </header>
-
-      <main class="workspace" aria-label="Python runner">
-        <section class="toolbar" aria-label="Runner controls">
-          <div class="toolbar__group">
-            <button id="run-button" class="button button--primary" type="button">Run</button>
+        <nav class="nav-bar__controls" aria-label="Runner controls">
+          <div class="nav-bar__group">
+            <button id="run-button" class="button button--primary" type="button">
+              Run (control + enter)
+            </button>
             <button id="stop-button" class="button" type="button" disabled>Stop</button>
-            <button id="clear-output-button" class="button" type="button">Clear</button>
-          </div>
-          <div class="toolbar__group">
-            <button id="load-example-button" class="button" type="button">Examples</button>
+            <button id="clear-output-button" class="button" type="button">Clear output</button>
+            <button id="copy-output-button" class="button" type="button">Copy output</button>
             <button id="copy-share-link-button" class="button" type="button">Copy link</button>
             <a
               id="report-issue-link"
@@ -64,41 +45,31 @@
             >
               Report issue
             </a>
+            <button
+              id="theme-toggle-button"
+              class="button button--small"
+              type="button"
+            >
+              Day mode
+            </button>
           </div>
-        </section>
+          <div class="nav-bar__group nav-bar__group--library">
+            <button id="load-example-button" class="button" type="button">
+              Script library
+            </button>
+          </div>
+        </nav>
+        <p id="status-message" class="sr-only" role="status" aria-live="polite"></p>
+      </header>
 
-        <div class="status-row" role="status" aria-live="polite">
-          <p id="status-message">Ready.</p>
-          <p id="share-summary">Short link if possible.</p>
-        </div>
-
+      <main class="workspace" aria-label="Python runner">
         <div class="panes">
-          <section class="pane pane--editor" aria-labelledby="editor-heading">
-            <div class="pane__header">
-              <div>
-                <p class="pane__eyebrow">Editor</p>
-                <h2 id="editor-heading">Script</h2>
-              </div>
-              <p id="editor-origin" class="pane__detail">Loading starter…</p>
-            </div>
+          <section class="pane pane--editor" aria-label="Python script editor">
             <label class="sr-only" for="editor">Python script editor</label>
-            <textarea
-              id="editor"
-              class="editor"
-              spellcheck="false"
-              aria-describedby="editor-help"
-            ></textarea>
-            <p id="editor-help" class="pane__hint">Load an example or paste code.</p>
+            <textarea id="editor" class="editor" spellcheck="false"></textarea>
           </section>
 
-          <section class="pane pane--output" aria-labelledby="output-heading">
-            <div class="pane__header">
-              <div>
-                <p class="pane__eyebrow">Output</p>
-                <h2 id="output-heading">Terminal</h2>
-              </div>
-              <p class="pane__detail">Fast default</p>
-            </div>
+          <section class="pane pane--output" aria-label="Output terminal">
             <pre id="output" class="output" tabindex="0"></pre>
             <div id="runtime-prompt" class="runtime-prompt" hidden>
               <p id="runtime-prompt-message">
@@ -139,11 +110,11 @@
 
     <dialog id="examples-dialog" class="examples-dialog" aria-labelledby="examples-title">
       <form method="dialog" class="examples-dialog__header">
-        <div>
-          <p class="pane__eyebrow">Examples</p>
-          <h2 id="examples-title">Load a practical script</h2>
+        <div class="examples-dialog__title-row">
+          <h2 id="examples-title">Script library</h2>
+          <p id="example-count" class="examples-dialog__count"></p>
         </div>
-        <button class="button" value="cancel">Close</button>
+        <button class="button button--small" value="cancel">Close</button>
       </form>
 
       <label class="sr-only" for="example-search">Search examples</label>
@@ -151,10 +122,9 @@
         id="example-search"
         class="examples-dialog__search"
         type="search"
-        placeholder="Search money, time, JSON…"
+        placeholder="Search scripts"
       />
 
-      <p id="example-count" class="examples-dialog__count"></p>
       <div id="examples-list" class="examples-list" role="list"></div>
     </dialog>
 

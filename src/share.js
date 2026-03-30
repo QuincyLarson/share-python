@@ -1,19 +1,16 @@
 import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from 'lz-string';
 import { APP_CONFIG } from './config.js';
+import { normalizeExampleSource } from './starter.js';
 
 export const SHARE_VERSION = APP_CONFIG.shareVersion;
-
-function normalizeSource(sourceText) {
-  return sourceText.replace(/\r\n/g, '\n');
-}
 
 function sanitizeRuntimeHint(runtimeHint) {
   return runtimeHint === 'fast' || runtimeHint === 'full' ? runtimeHint : null;
 }
 
 export function findMatchingExample(sourceText, examples) {
-  const normalizedSource = normalizeSource(sourceText);
-  return examples.find((example) => normalizeSource(example.source) === normalizedSource) ?? null;
+  const normalizedSource = normalizeExampleSource(sourceText);
+  return examples.find((example) => normalizeExampleSource(example.source) === normalizedSource) ?? null;
 }
 
 export function buildShareFragment({ source, runtimeHint, examples }) {

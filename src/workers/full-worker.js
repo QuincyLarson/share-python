@@ -38,10 +38,14 @@ function blockNetwork() {
   };
 }
 
-async function getRuntime() {
+async function getRuntime(indexURL) {
+  if (!indexURL) {
+    throw new Error('Full Python runtime URL is missing.');
+  }
+
   if (!runtimePromise) {
     runtimePromise = loadPyodide({
-      indexURL: new URL('../runtimes/full/', import.meta.url).toString(),
+      indexURL,
     }).then((pyodide) => {
       pyodide.setStdout({
         batched: (text) => {
@@ -73,7 +77,7 @@ self.addEventListener('message', async (event) => {
   }
 
   try {
-    const pyodide = await getRuntime();
+    const pyodide = await getRuntime(event.data.assets?.fullIndexUrl);
     const restoreNetwork = blockNetwork();
 
     try {
@@ -90,4 +94,3 @@ self.addEventListener('message', async (event) => {
     });
   }
 });
-

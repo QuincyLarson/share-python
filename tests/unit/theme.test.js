@@ -24,34 +24,34 @@ function createStorage() {
 }
 
 describe('theme preferences', () => {
-  it('defaults to system mode when nothing is stored', () => {
-    expect(loadThemePreference(createStorage())).toBe('system');
+  it('defaults to the system preference when nothing is stored', () => {
+    expect(loadThemePreference(createStorage())).toBeNull();
   });
 
-  it('resolves system mode using the browser preference', () => {
-    expect(resolveThemePreference('system', true)).toBe('dark');
-    expect(resolveThemePreference('system', false)).toBe('light');
+  it('resolves the initial mode using the browser preference', () => {
+    expect(resolveThemePreference(null, true)).toBe('dark');
+    expect(resolveThemePreference(null, false)).toBe('light');
   });
 
-  it('cycles through auto, dark, and light modes', () => {
-    expect(getNextThemePreference('system')).toBe('dark');
+  it('toggles between dark and light modes', () => {
+    expect(getNextThemePreference(null, true)).toBe('light');
     expect(getNextThemePreference('dark')).toBe('light');
-    expect(getNextThemePreference('light')).toBe('system');
+    expect(getNextThemePreference('light')).toBe('dark');
   });
 
-  it('persists explicit theme modes and clears system mode', () => {
+  it('persists explicit theme modes and clears the initial auto-detected mode', () => {
     const storage = createStorage();
 
     saveThemePreference('dark', storage);
     expect(loadThemePreference(storage)).toBe('dark');
 
-    saveThemePreference('system', storage);
-    expect(loadThemePreference(storage)).toBe('system');
+    saveThemePreference(null, storage);
+    expect(loadThemePreference(storage)).toBeNull();
   });
 
   it('renders compact button labels', () => {
-    expect(getThemeToggleLabel('system')).toBe('Theme: Auto');
-    expect(getThemeToggleLabel('dark')).toBe('Theme: Dark');
-    expect(getThemeToggleLabel('light')).toBe('Theme: Light');
+    expect(getThemeToggleLabel(null, true)).toBe('Night mode');
+    expect(getThemeToggleLabel('dark')).toBe('Night mode');
+    expect(getThemeToggleLabel('light')).toBe('Day mode');
   });
 });
