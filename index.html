@@ -25,19 +25,14 @@
     <div class="app-shell">
       <header class="hero">
         <div class="hero__copy">
-          <p class="hero__eyebrow">freeCodeCamp tool</p>
           <div class="hero__heading">
             <h1>Python Runner</h1>
             <div class="hero__signals" aria-label="Product principles">
               <p>Static</p>
+              <p>Shareable</p>
               <p>Text-only</p>
-              <p>No sign-in</p>
             </div>
           </div>
-          <p class="hero__lede">
-            Paste, edit, run, and share practical Python scripts with plain
-            text output and no backend.
-          </p>
         </div>
         <div class="hero__actions">
           <button
@@ -53,15 +48,13 @@
       <main class="workspace" aria-label="Python runner">
         <section class="toolbar" aria-label="Runner controls">
           <div class="toolbar__group">
-            <button id="run-button" class="button button--primary">Run</button>
-            <button id="stop-button" class="button" disabled>Stop</button>
-            <button id="clear-output-button" class="button">Clear output</button>
+            <button id="run-button" class="button button--primary" type="button">Run</button>
+            <button id="stop-button" class="button" type="button" disabled>Stop</button>
+            <button id="clear-output-button" class="button" type="button">Clear</button>
           </div>
           <div class="toolbar__group">
-            <button id="load-example-button" class="button">Load example</button>
-            <button id="copy-share-link-button" class="button">
-              Copy share link
-            </button>
+            <button id="load-example-button" class="button" type="button">Examples</button>
+            <button id="copy-share-link-button" class="button" type="button">Copy link</button>
             <a
               id="report-issue-link"
               class="button button--link"
@@ -75,10 +68,8 @@
         </section>
 
         <div class="status-row" role="status" aria-live="polite">
-          <p id="status-message">
-            Shell ready. Editing, examples, and share links are wired up.
-          </p>
-          <p id="share-summary">Share links prefer short example permalinks.</p>
+          <p id="status-message">Ready.</p>
+          <p id="share-summary">Short link if possible.</p>
         </div>
 
         <div class="panes">
@@ -97,10 +88,7 @@
               spellcheck="false"
               aria-describedby="editor-help"
             ></textarea>
-            <p id="editor-help" class="pane__hint">
-              Use the example picker for practical starter scripts, then edit
-              constants near the top and click Run.
-            </p>
+            <p id="editor-help" class="pane__hint">Load an example or paste code.</p>
           </section>
 
           <section class="pane pane--output" aria-labelledby="output-heading">
@@ -109,7 +97,7 @@
                 <p class="pane__eyebrow">Output</p>
                 <h2 id="output-heading">Terminal</h2>
               </div>
-              <p class="pane__detail">Fast by default</p>
+              <p class="pane__detail">Fast default</p>
             </div>
             <pre id="output" class="output" tabindex="0"></pre>
             <div id="runtime-prompt" class="runtime-prompt" hidden>
@@ -147,13 +135,6 @@
           </section>
         </div>
       </main>
-
-      <footer class="footer">
-        <p>
-          Browser-only scripting for educational and utility use. No hosted code
-          storage. Outputs are provided as-is.
-        </p>
-      </footer>
     </div>
 
     <dialog id="examples-dialog" class="examples-dialog" aria-labelledby="examples-title">

@@ -209,7 +209,7 @@ export async function createApp() {
   function renderShareSummary() {
     const matchingExample = findMatchingExampleBySource(state.source);
     if (matchingExample) {
-      shareSummary.textContent = `Copy share link will use the short example permalink for ${matchingExample.title}.`;
+      shareSummary.textContent = `Short link for ${matchingExample.title}.`;
       return;
     }
 
@@ -220,13 +220,11 @@ export async function createApp() {
     });
 
     if (!shareState.isExamplePermalink && shareState.isTooLong) {
-      shareSummary.textContent =
-        'Copy share link will compress the current editor contents into the URL fragment. This link is long and may be unreliable to share.';
+      shareSummary.textContent = 'Long share link. May be unreliable.';
       return;
     }
 
-    shareSummary.textContent =
-      'Copy share link will compress the current editor contents into the URL fragment.';
+    shareSummary.textContent = 'Link stores this script.';
   }
 
   function renderEditorOrigin(origin) {
@@ -307,6 +305,7 @@ export async function createApp() {
     output.textContent = FOUNDATION_OUTPUT;
     state.hadRunOutput = false;
     donationCta.hidden = true;
+    output.scrollTop = 0;
     setRuntimePrompt('');
   }
 
@@ -440,10 +439,13 @@ export async function createApp() {
   }
 
   editor.value = state.source;
+  editor.selectionStart = 0;
+  editor.selectionEnd = 0;
+  editor.scrollTop = 0;
   renderTheme();
   clearOutputPanel();
   renderEditorOrigin(initialState.origin);
-  renderStatus(initialState.warning ?? 'Shell ready. Editing, examples, and runtime controls are wired up.');
+  renderStatus(initialState.warning ?? 'Ready.');
   renderShareSummary();
   updateIssueLink();
   setRunningState(false);
@@ -473,19 +475,19 @@ export async function createApp() {
       await copyText(shareState.url);
       renderStatus(
         shareState.isTooLong
-          ? 'Copied a long share link. Trim comments or pasted data if it feels unreliable.'
+          ? 'Copied a long share link.'
           : shareState.isExamplePermalink
-            ? 'Copied a short example permalink.'
-            : 'Copied a prefilled share link.',
+            ? 'Copied a short link.'
+            : 'Copied a share link.',
       );
     } catch {
-      renderStatus('Could not copy the share link automatically. Copy it from the browser address bar instead.');
+      renderStatus('Could not copy the link automatically.');
     }
   });
 
   clearOutputButton.addEventListener('click', () => {
     clearOutputPanel();
-    renderStatus('Cleared the terminal panel.');
+    renderStatus('Cleared output.');
   });
 
   runButton.addEventListener('click', () => {
@@ -553,5 +555,11 @@ export async function createApp() {
     }
   }
 
-  editor.focus();
+  window.scrollTo(0, 0);
+  requestAnimationFrame(() => {
+    window.scrollTo(0, 0);
+    editor.scrollTop = 0;
+    output.scrollTop = 0;
+    editor.focus({ preventScroll: true });
+  });
 }

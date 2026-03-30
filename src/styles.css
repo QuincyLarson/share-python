@@ -132,8 +132,8 @@ button,
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  min-height: 2.2rem;
-  padding: 0.45rem 0.75rem;
+  min-height: 2rem;
+  padding: 0.35rem 0.65rem;
   border: 2px solid var(--border-strong);
   border-radius: var(--radius-1);
   background: var(--button-bg);
@@ -176,20 +176,19 @@ button:disabled,
 }
 
 .button--small {
-  min-height: 2rem;
-  padding: 0.35rem 0.65rem;
+  min-height: 1.85rem;
+  padding: 0.28rem 0.55rem;
   font-size: 0.8rem;
 }
 
 .app-shell {
   width: min(100%, var(--page-width));
   margin: 0 auto;
-  padding: var(--space-3);
+  padding: var(--space-2);
 }
 
 .hero,
 .workspace,
-.footer,
 .examples-dialog {
   border: 2px solid var(--border-strong);
   background: var(--page-surface);
@@ -198,25 +197,22 @@ button:disabled,
 .hero {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: var(--space-3);
-  align-items: start;
-  padding: var(--space-4);
+  gap: var(--space-2);
+  align-items: center;
+  padding: var(--space-3);
 }
 
 .hero__copy {
-  display: grid;
-  gap: var(--space-2);
+  min-width: 0;
 }
 
 .hero__heading {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-3);
+  gap: var(--space-2);
   flex-wrap: wrap;
 }
-
-.hero__eyebrow,
 .pane__eyebrow,
 .example-card__category {
   margin: 0;
@@ -238,37 +234,30 @@ button:disabled,
 }
 
 .hero h1 {
-  font-size: clamp(1.35rem, 2vw, 1.8rem);
+  font-size: clamp(1.15rem, 1.7vw, 1.5rem);
 }
 
 .hero__signals {
   display: flex;
-  gap: var(--space-2);
+  gap: var(--space-1);
   flex-wrap: wrap;
 }
 
 .hero__signals p {
   margin: 0;
-  padding: 0.2rem 0.45rem;
+  padding: 0.18rem 0.4rem;
   border: 1px solid var(--border);
   background: var(--panel-muted);
   color: var(--text-muted);
   font-family: var(--font-mono);
-  font-size: 0.75rem;
+  font-size: 0.72rem;
 }
 
-.hero__lede,
 .pane__hint,
 .example-card__summary,
-.footer,
 .status-row,
 .examples-dialog__count {
   color: var(--text-muted);
-}
-
-.hero__lede {
-  margin: 0;
-  max-width: 60ch;
 }
 
 .hero__actions {
@@ -277,8 +266,8 @@ button:disabled,
 }
 
 .workspace {
-  margin-top: var(--space-3);
-  padding: var(--space-3);
+  margin-top: var(--space-2);
+  padding: var(--space-2);
 }
 
 .toolbar,
@@ -288,7 +277,7 @@ button:disabled,
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-3);
+  gap: var(--space-2);
 }
 
 .toolbar {
@@ -297,16 +286,16 @@ button:disabled,
 
 .toolbar__group {
   display: flex;
-  gap: var(--space-2);
+  gap: var(--space-1);
   flex-wrap: wrap;
 }
 
 .status-row {
-  margin-top: var(--space-2);
-  padding: 0.55rem 0.75rem;
+  margin-top: var(--space-1);
+  padding: 0.35rem 0.55rem;
   border: 1px solid var(--border);
   background: var(--page-subtle);
-  font-size: 0.82rem;
+  font-size: 0.76rem;
 }
 
 .status-row p {
@@ -317,16 +306,25 @@ button:disabled,
   display: grid;
   grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
   gap: var(--space-2);
-  margin-top: var(--space-2);
+  margin-top: var(--space-1);
 }
 
 .pane {
   display: grid;
-  gap: var(--space-2);
-  min-height: 27rem;
+  gap: var(--space-1);
+  align-content: start;
+  min-height: 26rem;
   border: 1px solid var(--border);
   background: var(--page-surface-strong);
-  padding: var(--space-3);
+  padding: var(--space-2);
+}
+
+.pane--editor {
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+.pane--output {
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
 }
 
 .pane__header {
@@ -355,19 +353,22 @@ button:disabled,
 .output {
   min-height: 0;
   flex: 1 1 auto;
-  padding: 0.75rem;
+  padding: 0.6rem;
   font-size: 0.88rem;
   line-height: 1.5;
 }
 
 .editor {
-  min-height: 22rem;
+  min-height: 0;
+  height: 100%;
   resize: vertical;
   background: var(--editor-bg);
 }
 
 .output {
   margin: 0;
+  align-self: start;
+  height: 100%;
   overflow: auto;
   white-space: pre-wrap;
   background: var(--terminal-bg);
@@ -407,20 +408,10 @@ button:disabled,
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-3);
+  gap: var(--space-2);
   border: 1px solid var(--border);
   background: var(--warning-panel);
   padding: 0.7rem 0.75rem;
-}
-
-.footer {
-  margin-top: var(--space-3);
-  padding: var(--space-3);
-  font-size: 0.82rem;
-}
-
-.footer p {
-  margin: 0;
 }
 
 .examples-dialog {
@@ -449,10 +440,10 @@ button:disabled,
 
 .example-card {
   display: grid;
-  gap: var(--space-2);
+  gap: var(--space-1);
   border: 1px solid var(--border);
   background: var(--panel-muted);
-  padding: var(--space-3);
+  padding: var(--space-2);
 }
 
 .example-card__tags {
@@ -516,7 +507,6 @@ button:disabled,
 
   .workspace,
   .hero,
-  .footer,
   .examples-dialog {
     padding: var(--space-3);
   }

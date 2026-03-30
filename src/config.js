@@ -16,8 +16,7 @@ export const APP_CONFIG = {
 };
 
 export const FOUNDATION_OUTPUT = [
-  'Ready to run.',
+  'Ready.',
   '',
-  'Output from each run will appear here.',
-  'Shared scripts are prefills only and never autorun.',
+  'Run output appears here.',
 ].join('\n');
