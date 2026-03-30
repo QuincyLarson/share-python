@@ -190,5 +190,29 @@ export const examples = [
       }
     ],
     "script": "# Running pace calculator\n# Edit: distance_miles and finish_time_minutes.\n# Assumptions: distance is entered in miles and total time is entered in minutes.\n# Limitations: this example does not convert from hours/minutes/seconds inputs.\n# Output: prints pace per mile and an estimated 5K finish time at the same pace.\n\ndistance_miles = 6.2\nfinish_time_minutes = 54\n\npace_minutes = finish_time_minutes / distance_miles\npace_whole_minutes = int(pace_minutes)\npace_seconds = round((pace_minutes - pace_whole_minutes) * 60)\nestimated_5k_minutes = pace_minutes * 3.10686\n\nprint(\"Running pace estimate\")\nprint(\"-\" * 21)\nprint(f\"Distance: {distance_miles:.2f} miles\")\nprint(f\"Finish time: {finish_time_minutes:.1f} minutes\")\nprint(f\"Pace per mile: {pace_whole_minutes}:{pace_seconds:02d}\")\nprint(f\"Estimated 5K: {estimated_5k_minutes:.1f} minutes\")\n\n"
+  },
+  {
+    "id": "recipe-fraction-scaler",
+    "title": "Recipe fraction scaler",
+    "category": "Food & household",
+    "summary": "Scale a simple ingredient list with exact fractional amounts.",
+    "tags": [
+      "recipe",
+      "fractions",
+      "kitchen"
+    ],
+    "runtime": "full",
+    "difficulty": "beginner",
+    "description": "Uses Python's fractions module to keep small measurement math readable and exact.",
+    "scriptPath": "examples/everyday/recipe-fraction-scaler.py",
+    "issueContext": "First curated Full Python example for compatibility coverage and learner guidance.",
+    "featured": false,
+    "checks": [
+      {
+        "type": "includes",
+        "value": "Scaled ingredient list"
+      }
+    ],
+    "script": "# Recipe fraction scaler\n# ----------------------\n# What this script does:\n#   Scales a simple ingredient list while keeping exact fractional measurements.\n#\n# Which variables to edit:\n#   - desired_batches\n#   - ingredients\n#\n# Assumptions and limitations:\n#   - Fractions stay as exact numerator/denominator values in the output.\n#   - This example does not convert between kitchen units automatically.\n#\n# Expected output shape:\n#   One heading plus one scaled amount per ingredient.\n\nfrom fractions import Fraction\n\ndesired_batches = Fraction(3, 2)\ningredients = [\n    (\"flour (cups)\", Fraction(2, 1)),\n    (\"olive oil (tablespoons)\", Fraction(3, 2)),\n    (\"salt (teaspoons)\", Fraction(3, 4)),\n]\n\n\ndef format_fraction(value):\n    if value.denominator == 1:\n        return str(value.numerator)\n\n    return f\"{value.numerator}/{value.denominator}\"\n\n\nprint(\"Scaled ingredient list\")\nprint(\"----------------------\")\nprint(f\"Batch multiplier: {format_fraction(desired_batches)}x\")\n\nfor label, amount in ingredients:\n    scaled = amount * desired_batches\n    print(f\"{label:26} {format_fraction(scaled)}\")\n"
   }
 ];

@@ -17,9 +17,10 @@ describe('example manifest', () => {
       outputPath: tempManifestPath,
     });
 
-    expect(manifest.length).toBe(8);
+    expect(manifest.length).toBe(9);
     expect(manifest[0].id).toBe('hello-runner');
     expect(manifest.some((example) => example.id === 'running-pace')).toBe(true);
+    expect(manifest.some((example) => example.id === 'recipe-fraction-scaler')).toBe(true);
     expect(manifest.every((example) => Array.isArray(example.checks) && example.checks.length > 0)).toBe(true);
   });
 

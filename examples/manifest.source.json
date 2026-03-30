@@ -110,5 +110,19 @@
     "issueContext": "Initial curated example pack",
     "featured": true,
     "checks": [{ "type": "includes", "value": "Pace per mile:" }]
+  },
+  {
+    "id": "recipe-fraction-scaler",
+    "title": "Recipe fraction scaler",
+    "category": "Food & household",
+    "summary": "Scale a simple ingredient list with exact fractional amounts.",
+    "tags": ["recipe", "fractions", "kitchen"],
+    "runtime": "full",
+    "difficulty": "beginner",
+    "description": "Uses Python's fractions module to keep small measurement math readable and exact.",
+    "scriptPath": "examples/everyday/recipe-fraction-scaler.py",
+    "issueContext": "First curated Full Python example for compatibility coverage and learner guidance.",
+    "featured": false,
+    "checks": [{ "type": "includes", "value": "Scaled ingredient list" }]
   }
 ]
