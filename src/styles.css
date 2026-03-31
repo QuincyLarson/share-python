@@ -223,8 +223,7 @@ button:disabled,
 
 .nav-bar__controls,
 .nav-bar__group,
-.examples-dialog__header,
-.examples-dialog__title-row {
+.examples-dialog__header {
   display: flex;
   gap: var(--space-1);
   align-items: center;
@@ -366,7 +365,6 @@ button:disabled,
   background: rgba(10, 10, 35, 0.68);
 }
 
-.examples-dialog__count,
 .example-list__meta {
   margin: 0;
 }
@@ -375,43 +373,24 @@ button:disabled,
   justify-content: space-between;
 }
 
-.examples-dialog__title-row h2 {
+.examples-dialog__header h2 {
   margin: 0;
   font-family: var(--font-mono);
   font-size: 1rem;
 }
 
-.examples-dialog__count,
 .example-list__meta {
   color: var(--text-muted);
 }
 
 .examples-list {
-  display: grid;
-  gap: 0.45rem;
-  margin-top: 0.5rem;
-  max-height: 62vh;
-  overflow: auto;
-}
-
-.example-group {
-  display: grid;
-  gap: 0.22rem;
-}
-
-.example-group__title {
-  margin: 0;
-  font-family: var(--font-mono);
-  font-size: 0.74rem;
-  color: var(--accent-strong);
-}
-
-.example-list {
   list-style: none;
   display: grid;
   gap: 0.08rem;
   padding: 0;
-  margin: 0;
+  margin: 0.5rem 0 0;
+  max-height: 62vh;
+  overflow: auto;
 }
 
 .example-list__item {
@@ -491,7 +470,6 @@ button:disabled,
 
   .nav-bar__controls,
   .examples-dialog__header,
-  .examples-dialog__title-row,
   .runtime-prompt__actions,
   .donation-card__copy,
   .donation-card {

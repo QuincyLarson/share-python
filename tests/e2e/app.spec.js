@@ -89,16 +89,17 @@ async function captureCopiedShareUrl(page) {
   return page.evaluate(() => window.__copiedTexts.at(-1) ?? null);
 }
 
-async function loadLibraryExample(page, { searchTerm, exampleId, groupName }) {
+async function loadLibraryExample(page, { searchTerm, exampleId, topicLabel }) {
   await page.locator('#load-example-button').click();
   await page.locator('#example-search').fill(searchTerm);
 
-  if (groupName) {
-    await expect(page.locator('.example-group__title').filter({ hasText: `# ${groupName}` })).toBeVisible();
-  }
-
   const exampleRow = page.locator(`#examples-list [data-example-id="${exampleId}"]`);
   await expect(exampleRow).toBeVisible();
+
+  if (topicLabel) {
+    await expect(exampleRow.locator('.example-list__meta')).toHaveText(topicLabel);
+  }
+
   await exampleRow.locator('.example-list__link').click();
 }
 
@@ -117,6 +118,27 @@ test('loads the shell and prepopulates issue reporting for the starter example',
   expect(issueUrl.pathname).toBe('/QuincyLarson/share-python/issues/new');
   expect(issueUrl.searchParams.get('title')).toMatch(/^\[Example\] /);
   expect(issueUrl.searchParams.get('body')).toContain('#ex=');
+});
+
+test('shows a flat library count, hides hello runner, and relabels health topics', async ({
+  page,
+}) => {
+  await gotoApp(page);
+  await page.locator('#load-example-button').click();
+
+  await expect(page.locator('#examples-title')).toHaveText('Library of 143 Python Scripts');
+  await expect(page.locator('.example-group__title')).toHaveCount(0);
+  await expect(page.locator('#examples-list [data-example-id="hello-runner"]')).toHaveCount(0);
+
+  await page.locator('#example-search').fill('hello runner');
+  await expect(page.locator('#examples-title')).toHaveText('Library of 0 Python Scripts');
+  await expect(page.locator('.examples-list__empty')).toHaveText('No scripts found.');
+
+  await page.locator('#example-search').fill('gfr');
+  await expect(page.locator('#examples-title')).toHaveText('Library of 1 Python Script');
+  await expect(
+    page.locator('#examples-list [data-example-id="gfr-calculator"] .example-list__meta'),
+  ).toHaveText('Health');
 });
 
 test('runs a script in Fast Python, supports local select-all, copies output, and clears output', async ({
@@ -383,7 +405,7 @@ test('runs the time zone library example in Fast Python', async ({ page }) => {
   await loadLibraryExample(page, {
     searchTerm: 'time zone',
     exampleId: 'timezone-deadline',
-    groupName: 'Time',
+    topicLabel: 'Time & timezone',
   });
   await page.locator('#run-button').click();
 
@@ -431,7 +453,7 @@ test('formats the mortgage example output with commas and line breaks', async ({
   await loadLibraryExample(page, {
     searchTerm: 'mortgage',
     exampleId: 'mortgage-payment',
-    groupName: 'Finance',
+    topicLabel: 'Money & loans',
   });
   await page.locator('#run-button').click();
 

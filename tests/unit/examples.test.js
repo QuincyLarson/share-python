@@ -3,7 +3,12 @@ import { readFile, unlink } from 'node:fs/promises';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { buildExamplesManifest } from '../../scripts/build-examples.mjs';
-import { EXAMPLES, validateExampleManifest } from '../../src/examples.js';
+import {
+  EXAMPLES,
+  filterExamples,
+  getExampleLibraryTopic,
+  validateExampleManifest,
+} from '../../src/examples.js';
 import { examplePages } from '../../src/generated/example-pages.js';
 
 const tempManifestPath = path.join(process.cwd(), 'tmp-examples-manifest.js');
@@ -40,6 +45,36 @@ describe('example manifest', () => {
       expect(entry.hasHeaderComment).toBe(true);
       expect(entry.hasChecks).toBe(true);
     }
+  });
+
+  it('keeps the script library flattened, ordered, and free of the starter example', () => {
+    const orderedExamples = filterExamples();
+    const firstTopicTitles = orderedExamples.slice(0, 5).map((example) => ({
+      topic: getExampleLibraryTopic(example),
+      title: example.title,
+    }));
+    const firstExampleByTopic = orderedExamples.reduce((topics, example) => {
+      const topic = getExampleLibraryTopic(example);
+
+      if (!(topic in topics)) {
+        topics[topic] = example.title;
+      }
+
+      return topics;
+    }, {});
+
+    expect(orderedExamples).toHaveLength(143);
+    expect(orderedExamples.some((example) => example.id === 'hello-runner')).toBe(false);
+    expect(firstTopicTitles).toEqual([
+      { topic: 'Arithmetic', title: 'Big Number Calculator' },
+      { topic: 'Arithmetic', title: 'Binary Calculator' },
+      { topic: 'Arithmetic', title: 'Exponent Calculator' },
+      { topic: 'Arithmetic', title: 'Factor Calculator' },
+      { topic: 'Arithmetic', title: 'Fraction Calculator' },
+    ]);
+    expect(firstExampleByTopic.Health).toBe('BAC Calculator');
+    expect(firstExampleByTopic['Real Estate']).toBe('Amortization Calculator');
+    expect(firstExampleByTopic['Time & timezone']).toBe('Business days between dates');
   });
 
   it('publishes dedicated calculator route pages for finance, math, and health examples', () => {

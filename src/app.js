@@ -4,8 +4,8 @@ import {
   EXAMPLES,
   filterExamples,
   findMatchingExampleBySource,
+  getExampleLibraryTopic,
   getExampleById,
-  groupExamples,
   getRandomExample,
 } from './examples.js';
 import { buildIssueUrl } from './issue.js';
@@ -87,30 +87,10 @@ function buildExampleListItem(example, onLoad) {
 
   const meta = document.createElement('span');
   meta.className = 'example-list__meta';
-  meta.textContent = example.pageSection ?? example.category;
+  meta.textContent = getExampleLibraryTopic(example);
 
   item.append(action, meta);
   return item;
-}
-
-function buildExampleGroup(groupName, examples, onLoad) {
-  const section = document.createElement('section');
-  section.className = 'example-group';
-  section.dataset.group = groupName.toLowerCase();
-
-  const heading = document.createElement('h3');
-  heading.className = 'example-group__title';
-  heading.textContent = `# ${groupName}`;
-
-  const list = document.createElement('ul');
-  list.className = 'example-list';
-
-  for (const example of examples) {
-    list.append(buildExampleListItem(example, onLoad));
-  }
-
-  section.append(heading, list);
-  return section;
 }
 
 function formatRuntimeLabel(runtime) {
@@ -174,7 +154,7 @@ export async function createApp() {
   const examplesDialog = document.querySelector('#examples-dialog');
   const examplesList = document.querySelector('#examples-list');
   const exampleSearch = document.querySelector('#example-search');
-  const exampleCount = document.querySelector('#example-count');
+  const examplesTitle = document.querySelector('#examples-title');
   const reportIssueLink = document.querySelector('#report-issue-link');
   const copyShareLinkButton = document.querySelector('#copy-share-link-button');
   const copyOutputButton = document.querySelector('#copy-output-button');
@@ -311,17 +291,16 @@ export async function createApp() {
 
   function renderExampleList(query = '') {
     const results = filterExamples(query);
-    const groupedResults = groupExamples(query);
 
     if (results.length === 0) {
-      const emptyState = document.createElement('p');
+      const emptyState = document.createElement('li');
       emptyState.className = 'examples-list__empty';
       emptyState.textContent = 'No scripts found.';
       examplesList.replaceChildren(emptyState);
     } else {
       examplesList.replaceChildren(
-        ...groupedResults.map((group) =>
-          buildExampleGroup(group.groupName, group.examples, (exampleId) => {
+        ...results.map((example) =>
+          buildExampleListItem(example, (exampleId) => {
             const nextExample = getExampleById(exampleId);
             applySource(nextExample.source, nextExample.id);
             renderStatus(`Loaded ${nextExample.title}.`);
@@ -331,7 +310,9 @@ export async function createApp() {
       );
     }
 
-    exampleCount.textContent = `${results.length} script${results.length === 1 ? '' : 's'}`;
+    examplesTitle.textContent = `Library of ${results.length} Python Script${
+      results.length === 1 ? '' : 's'
+    }`;
   }
 
   function setRuntimePrompt(message = '') {
