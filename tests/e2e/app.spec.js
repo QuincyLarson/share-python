@@ -89,6 +89,19 @@ async function captureCopiedShareUrl(page) {
   return page.evaluate(() => window.__copiedTexts.at(-1) ?? null);
 }
 
+async function loadLibraryExample(page, { searchTerm, exampleId, groupName }) {
+  await page.locator('#load-example-button').click();
+  await page.locator('#example-search').fill(searchTerm);
+
+  if (groupName) {
+    await expect(page.locator('.example-group__title').filter({ hasText: `# ${groupName}` })).toBeVisible();
+  }
+
+  const exampleRow = page.locator(`#examples-list [data-example-id="${exampleId}"]`);
+  await expect(exampleRow).toBeVisible();
+  await exampleRow.locator('.example-list__link').click();
+}
+
 test('loads the shell and prepopulates issue reporting for the starter example', async ({ page }) => {
   await gotoApp(page);
 
@@ -339,14 +352,39 @@ test('loads a generated calculator route page with calculator-specific metadata 
   });
 });
 
+test('serves generated math and health calculator pages directly from the preview build', async ({
+  page,
+}) => {
+  await gotoApp(page, {
+    pathname: '/math-calculators/percentage-calculator/',
+  });
+
+  await expect(page).toHaveTitle(/Percentage Calculator Python Script/i);
+  await expect(page.locator('#editor')).toHaveValue(/# Percentage Calculator/);
+  await page.locator('#run-button').click();
+  await expect(page.locator('#output')).toContainText('Percent change:', {
+    timeout: 30_000,
+  });
+
+  await gotoApp(page, {
+    pathname: '/health-calculators/gfr-calculator/',
+  });
+
+  await expect(page).toHaveTitle(/GFR Calculator Python Script/i);
+  await expect(page.locator('#editor')).toHaveValue(/# GFR Calculator/);
+  await page.locator('#run-button').click();
+  await expect(page.locator('#output')).toContainText('Estimated GFR:', {
+    timeout: 30_000,
+  });
+});
+
 test('runs the time zone library example in Fast Python', async ({ page }) => {
   await gotoApp(page);
-
-  await page.locator('#load-example-button').click();
-  await page.locator('#example-search').fill('time zone');
-
-  const exampleCard = page.locator('.example-card').filter({ hasText: 'Time zone deadline converter' });
-  await exampleCard.getByRole('button', { name: 'Load' }).click();
+  await loadLibraryExample(page, {
+    searchTerm: 'time zone',
+    exampleId: 'timezone-deadline',
+    groupName: 'Time',
+  });
   await page.locator('#run-button').click();
 
   await expect(page.locator('#output')).toContainText('Deadline by time zone', {
@@ -390,12 +428,11 @@ test('preserves newline-separated output in Full Python', async ({ page }) => {
 
 test('formats the mortgage example output with commas and line breaks', async ({ page }) => {
   await gotoApp(page);
-
-  await page.locator('#load-example-button').click();
-  await page.locator('#example-search').fill('mortgage');
-
-  const exampleCard = page.locator('.example-card').filter({ hasText: 'Mortgage payment calculator' });
-  await exampleCard.getByRole('button', { name: 'Load' }).click();
+  await loadLibraryExample(page, {
+    searchTerm: 'mortgage',
+    exampleId: 'mortgage-payment',
+    groupName: 'Finance',
+  });
   await page.locator('#run-button').click();
 
   await expect

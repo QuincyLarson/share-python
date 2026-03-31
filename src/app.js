@@ -5,6 +5,7 @@ import {
   filterExamples,
   findMatchingExampleBySource,
   getExampleById,
+  groupExamples,
   getRandomExample,
 } from './examples.js';
 import { buildIssueUrl } from './issue.js';
@@ -73,35 +74,43 @@ function installOutputSelectionBehavior(element) {
   });
 }
 
-function buildExampleCard(example, onLoad) {
-  const article = document.createElement('article');
-  article.className = 'example-card';
-  article.setAttribute('role', 'listitem');
-
-  const category = document.createElement('p');
-  category.className = 'example-card__category';
-  category.textContent = `${example.category} · ${example.runtime}`;
-
-  const title = document.createElement('h3');
-  title.className = 'example-card__title';
-  title.textContent = example.title;
-
-  const summary = document.createElement('p');
-  summary.className = 'example-card__summary';
-  summary.textContent = example.summary;
-
-  const tags = document.createElement('p');
-  tags.className = 'example-card__tags';
-  tags.textContent = example.tags.map((tag) => `#${tag}`).join(' ');
+function buildExampleListItem(example, onLoad) {
+  const item = document.createElement('li');
+  item.className = 'example-list__item';
+  item.dataset.exampleId = example.id;
 
   const action = document.createElement('button');
-  action.className = 'button button--primary button--small';
+  action.className = 'example-list__link';
   action.type = 'button';
-  action.textContent = 'Load';
+  action.textContent = example.title;
   action.addEventListener('click', () => onLoad(example.id));
 
-  article.append(category, title, summary, tags, action);
-  return article;
+  const meta = document.createElement('span');
+  meta.className = 'example-list__meta';
+  meta.textContent = example.pageSection ?? example.category;
+
+  item.append(action, meta);
+  return item;
+}
+
+function buildExampleGroup(groupName, examples, onLoad) {
+  const section = document.createElement('section');
+  section.className = 'example-group';
+  section.dataset.group = groupName.toLowerCase();
+
+  const heading = document.createElement('h3');
+  heading.className = 'example-group__title';
+  heading.textContent = `# ${groupName}`;
+
+  const list = document.createElement('ul');
+  list.className = 'example-list';
+
+  for (const example of examples) {
+    list.append(buildExampleListItem(example, onLoad));
+  }
+
+  section.append(heading, list);
+  return section;
 }
 
 function formatRuntimeLabel(runtime) {
@@ -302,16 +311,25 @@ export async function createApp() {
 
   function renderExampleList(query = '') {
     const results = filterExamples(query);
-    examplesList.replaceChildren(
-      ...results.map((example) =>
-        buildExampleCard(example, (exampleId) => {
-          const nextExample = getExampleById(exampleId);
-          applySource(nextExample.source, nextExample.id);
-          renderStatus(`Loaded ${nextExample.title}.`);
-          examplesDialog.close();
-        }),
-      ),
-    );
+    const groupedResults = groupExamples(query);
+
+    if (results.length === 0) {
+      const emptyState = document.createElement('p');
+      emptyState.className = 'examples-list__empty';
+      emptyState.textContent = 'No scripts found.';
+      examplesList.replaceChildren(emptyState);
+    } else {
+      examplesList.replaceChildren(
+        ...groupedResults.map((group) =>
+          buildExampleGroup(group.groupName, group.examples, (exampleId) => {
+            const nextExample = getExampleById(exampleId);
+            applySource(nextExample.source, nextExample.id);
+            renderStatus(`Loaded ${nextExample.title}.`);
+            examplesDialog.close();
+          }),
+        ),
+      );
+    }
 
     exampleCount.textContent = `${results.length} script${results.length === 1 ? '' : 's'}`;
   }
