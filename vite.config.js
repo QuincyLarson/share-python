@@ -3,9 +3,12 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { defineConfig } from 'vite';
+import { EXAMPLE_ROUTE_PREFIXES } from './src/example-routes.js';
 
 const repoRoot = fileURLToPath(new URL('.', import.meta.url));
-const routePagesRoot = path.resolve(repoRoot, 'financial-calculators');
+const routePagesRoots = EXAMPLE_ROUTE_PREFIXES.map((routePrefix) =>
+  path.resolve(repoRoot, routePrefix),
+);
 
 function collectHtmlInputs(directoryPath) {
   if (!existsSync(directoryPath)) {
@@ -46,7 +49,13 @@ export default defineConfig({
     rollupOptions: {
       input: {
         app: path.resolve(repoRoot, 'index.html'),
-        ...collectHtmlInputs(routePagesRoot),
+        ...routePagesRoots.reduce(
+          (entries, routePagesRoot) => ({
+            ...entries,
+            ...collectHtmlInputs(routePagesRoot),
+          }),
+          {},
+        ),
       },
     },
   },

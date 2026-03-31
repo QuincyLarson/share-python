@@ -1,6 +1,6 @@
 import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from 'lz-string';
 import { APP_CONFIG } from './config.js';
-import { buildExampleRoutePath } from './example-routes.js';
+import { buildExamplePagePath, buildExampleRoutePath } from './example-routes.js';
 import { normalizeExampleSource } from './starter.js';
 
 export const SHARE_VERSION = APP_CONFIG.shareVersion;
@@ -43,7 +43,11 @@ export function buildShareFragment({ source, runtimeHint, examples }) {
 export function buildShareUrl({ source, runtimeHint, examples, location = window.location }) {
   const matchingExample = findMatchingExample(source, examples);
 
-  if (matchingExample?.routeSlug) {
+  const examplePagePath =
+    matchingExample?.pagePath ??
+    (matchingExample?.routeSlug ? buildExampleRoutePath(matchingExample.routeSlug) : null);
+
+  if (examplePagePath) {
     const validRuntimeHint = sanitizeRuntimeHint(runtimeHint);
     const fragmentParams = new URLSearchParams();
 
@@ -57,10 +61,9 @@ export function buildShareUrl({ source, runtimeHint, examples, location = window
       fragment,
       isExamplePermalink: true,
       isTooLong: false,
-      url: `${location.origin}${buildExampleRoutePath(
-        matchingExample.routeSlug,
-        location.pathname,
-      )}${fragment ? `#${fragment}` : ''}`,
+      url: `${location.origin}${buildExamplePagePath(examplePagePath, location.pathname)}${
+        fragment ? `#${fragment}` : ''
+      }`,
     };
   }
 

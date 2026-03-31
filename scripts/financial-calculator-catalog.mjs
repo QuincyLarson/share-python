@@ -2569,6 +2569,7 @@ const generatedExamples = [
 export function buildGeneratedFinancialExamples() {
   return generatedExamples.map((example) => ({
     ...example,
+    pageGroup: 'Finance',
     pageSection: example.category,
     pagePath: `/${EXAMPLE_ROUTE_PREFIX}/${example.routeSlug}/`,
   }));

@@ -109,6 +109,12 @@
     "scriptPath": "examples/health/running-pace.py",
     "issueContext": "Initial curated example pack",
     "featured": true,
+    "pageGroup": "Health",
+    "pageSection": "Fitness",
+    "routeSlug": "pace-calculator",
+    "pagePath": "/health-calculators/pace-calculator/",
+    "seoTitle": "Pace Calculator Python Script | SharePython.com",
+    "seoDescription": "Convert running time into pace-per-mile and projected race time with a simple Python script you can edit in the browser.",
     "checks": [{ "type": "includes", "value": "Pace per mile:" }]
   },
   {

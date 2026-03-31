@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { unlink } from 'node:fs/promises';
+import { readFile, unlink } from 'node:fs/promises';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { buildExamplesManifest } from '../../scripts/build-examples.mjs';
@@ -7,6 +7,9 @@ import { EXAMPLES, validateExampleManifest } from '../../src/examples.js';
 import { examplePages } from '../../src/generated/example-pages.js';
 
 const tempManifestPath = path.join(process.cwd(), 'tmp-examples-manifest.js');
+const homePagePath = path.join(process.cwd(), 'index.html');
+const sitemapPath = path.join(process.cwd(), 'public', 'sitemap.xml');
+const robotsPath = path.join(process.cwd(), 'public', 'robots.txt');
 
 afterEach(async () => {
   await unlink(tempManifestPath).catch(() => {});
@@ -18,11 +21,14 @@ describe('example manifest', () => {
       outputPath: tempManifestPath,
     });
 
-    expect(manifest.length).toBe(80);
+    expect(manifest.length).toBe(144);
     expect(manifest[0].id).toBe('hello-runner');
     expect(manifest.some((example) => example.id === 'running-pace')).toBe(true);
     expect(manifest.some((example) => example.id === 'recipe-fraction-scaler')).toBe(true);
     expect(manifest.some((example) => example.id === 'mortgage-calculator')).toBe(true);
+    expect(manifest.some((example) => example.id === 'percentage-calculator')).toBe(true);
+    expect(manifest.some((example) => example.id === 'gfr-calculator')).toBe(true);
+    expect(manifest.some((example) => example.id === 'bac-calculator')).toBe(true);
     expect(manifest.every((example) => Array.isArray(example.checks) && example.checks.length > 0)).toBe(true);
   });
 
@@ -36,11 +42,43 @@ describe('example manifest', () => {
     }
   });
 
-  it('publishes dedicated calculator route pages for generated financial examples', () => {
-    expect(examplePages).toHaveLength(71);
+  it('publishes dedicated calculator route pages for finance, math, and health examples', () => {
+    const routePrefixCounts = examplePages.reduce((counts, page) => {
+      const routePrefix = page.pagePath.split('/').filter(Boolean)[0];
+      counts[routePrefix] = (counts[routePrefix] ?? 0) + 1;
+      return counts;
+    }, {});
+
+    expect(examplePages).toHaveLength(136);
     expect(examplePages.some((page) => page.routeSlug === 'mortgage-calculator')).toBe(true);
-    expect(examplePages.every((page) => page.pagePath.startsWith('/financial-calculators/'))).toBe(
-      true,
-    );
+    expect(examplePages.some((page) => page.routeSlug === 'percentage-calculator')).toBe(true);
+    expect(examplePages.some((page) => page.routeSlug === 'gfr-calculator')).toBe(true);
+    expect(examplePages.some((page) => page.routeSlug === 'bac-calculator')).toBe(true);
+    expect(routePrefixCounts).toEqual({
+      'financial-calculators': 71,
+      'health-calculators': 27,
+      'math-calculators': 38,
+    });
+  });
+
+  it('publishes sitemap, robots, and homepage structured data for the calculator families', async () => {
+    const [homePageHtml, sitemap, robots] = await Promise.all([
+      readFile(homePagePath, 'utf8'),
+      readFile(sitemapPath, 'utf8'),
+      readFile(robotsPath, 'utf8'),
+    ]);
+
+    expect(homePageHtml).toContain('Popular calculator scripts');
+    expect(homePageHtml).toContain('https://sharepython.com/financial-calculators/mortgage-calculator/');
+    expect(homePageHtml).toContain('https://sharepython.com/math-calculators/percentage-calculator/');
+    expect(homePageHtml).toContain('https://sharepython.com/health-calculators/bmi-calculator/');
+
+    expect(robots).toContain('Sitemap: https://sharepython.com/sitemap.xml');
+    expect(sitemap).toContain('<loc>https://sharepython.com/financial-calculators/</loc>');
+    expect(sitemap).toContain('<loc>https://sharepython.com/math-calculators/</loc>');
+    expect(sitemap).toContain('<loc>https://sharepython.com/health-calculators/</loc>');
+    expect(sitemap).toContain('<loc>https://sharepython.com/math-calculators/percentage-calculator/</loc>');
+    expect(sitemap).toContain('<loc>https://sharepython.com/health-calculators/gfr-calculator/</loc>');
+    expect(sitemap).toContain('<loc>https://sharepython.com/health-calculators/bac-calculator/</loc>');
   });
 });
