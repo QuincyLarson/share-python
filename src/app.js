@@ -161,6 +161,7 @@ export async function createApp() {
   const statusMessage = document.querySelector('#status-message');
   const themeToggleButton = document.querySelector('#theme-toggle-button');
   const themeColorMeta = document.querySelector('#theme-color-meta');
+  const routeExampleId = document.body.dataset.routeExampleId ?? null;
   const examplesDialog = document.querySelector('#examples-dialog');
   const examplesList = document.querySelector('#examples-list');
   const exampleSearch = document.querySelector('#example-search');
@@ -178,9 +179,11 @@ export async function createApp() {
   const retryFullRuntimeButton = document.querySelector('#retry-full-runtime-button');
   const dismissRuntimePromptButton = document.querySelector('#dismiss-runtime-prompt-button');
 
-  const defaultExample = getRandomExample() ?? getExampleById(APP_CONFIG.defaultExampleId) ?? EXAMPLES[0];
+  const routeExample = routeExampleId ? getExampleById(routeExampleId) : null;
+  const defaultExample =
+    routeExample ?? getRandomExample() ?? getExampleById(APP_CONFIG.defaultExampleId) ?? EXAMPLES[0];
   const fragmentState = parseShareFragment(window.location.hash, EXAMPLES);
-  const localDraft = loadDraft();
+  const localDraft = routeExample ? null : loadDraft();
   const systemThemeQuery =
     typeof window.matchMedia === 'function'
       ? window.matchMedia('(prefers-color-scheme: dark)')
@@ -190,7 +193,8 @@ export async function createApp() {
     localDraft,
     defaultExample,
   });
-  const shouldUseStarterExample = !fragmentState?.source && !fragmentState?.error && !localDraft?.source;
+  const shouldUseStarterExample =
+    !routeExample && !fragmentState?.source && !fragmentState?.error && !localDraft?.source;
   const initialState = shouldUseStarterExample
     ? {
         ...resolvedInitialState,

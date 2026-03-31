@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'none'; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-src 'none'; worker-src 'self'"
+    />
+    <title>Annuity Payout Calculator Python Script | SharePython.com</title>
+    <meta
+      name="description"
+      content="Estimate a level monthly payout from an annuity balance over a fixed term. Edit the Python script and run it in your browser with no sign-in."
+    />
+    <meta property="og:title" content="Annuity Payout Calculator Python Script | SharePython.com" />
+    <meta
+      property="og:description"
+      content="Estimate a level monthly payout from an annuity balance over a fixed term. Edit the Python script and run it in your browser with no sign-in."
+    />
+    <meta property="og:type" content="website" />
+    <meta id="theme-color-meta" name="theme-color" content="#f5f6f7" />
+    <link rel="license" href="../../LICENSE" />
+  </head>
+  <body data-route-example-id="annuity-payout-calculator">
+    <div class="app-shell">
+      <header class="nav-bar">
+        <div class="brand-lockup">
+          <h1>SharePython.com</h1>
+        </div>
+        <nav class="nav-bar__controls" aria-label="Runner controls">
+          <div class="nav-bar__group">
+            <button id="run-button" class="button button--primary" type="button">
+              Run (control + enter)
+            </button>
+            <button id="stop-button" class="button" type="button" disabled>Stop</button>
+            <button id="copy-share-link-button" class="button" type="button">Copy link</button>
+            <a
+              id="report-issue-link"
+              class="button button--link"
+              href="https://github.com/QuincyLarson/share-python/issues/new"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Report issue
+            </a>
+            <button
+              id="theme-toggle-button"
+              class="button button--small"
+              type="button"
+            >
+              Day mode
+            </button>
+          </div>
+          <div class="nav-bar__group nav-bar__group--library">
+            <button id="load-example-button" class="button" type="button">
+              Script library
+            </button>
+          </div>
+        </nav>
+        <p id="status-message" class="sr-only" role="status" aria-live="polite"></p>
+      </header>
+
+      <main class="workspace" aria-label="Python runner">
+        <div class="panes">
+          <section class="pane pane--editor" aria-label="Python script editor">
+            <label class="sr-only" for="editor">Python script editor</label>
+            <textarea id="editor" class="editor" spellcheck="false" wrap="off"></textarea>
+          </section>
+
+          <section class="pane pane--output" aria-label="Output terminal">
+            <pre id="output" class="output" tabindex="0"></pre>
+            <div id="runtime-prompt" class="runtime-prompt" hidden>
+              <p id="runtime-prompt-message">
+                This script may need Full Python. Retry with Full Python?
+              </p>
+              <div class="runtime-prompt__actions">
+                <button
+                  id="retry-full-runtime-button"
+                  class="button button--primary button--small"
+                  type="button"
+                >
+                  Retry with Full Python
+                </button>
+                <button
+                  id="dismiss-runtime-prompt-button"
+                  class="button button--small"
+                  type="button"
+                >
+                  Dismiss
+                </button>
+              </div>
+            </div>
+            <div id="donation-cta" class="donation-card" hidden>
+              <div class="donation-card__copy">
+                <button id="clear-output-button" class="button button--small" type="button">
+                  Clear
+                </button>
+                <button id="copy-output-button" class="button button--small" type="button">
+                  Copy
+                </button>
+                <p>Did this save you time?</p>
+              </div>
+              <a
+                class="button button--primary button--small"
+                href="https://www.freecodecamp.org/donate/"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Donate to freeCodeCamp
+              </a>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <dialog id="examples-dialog" class="examples-dialog" aria-labelledby="examples-title">
+      <form method="dialog" class="examples-dialog__header">
+        <div class="examples-dialog__title-row">
+          <h2 id="examples-title">Script library</h2>
+          <p id="example-count" class="examples-dialog__count"></p>
+        </div>
+        <button class="button button--small" value="cancel">Close</button>
+      </form>
+
+      <label class="sr-only" for="example-search">Search examples</label>
+      <input
+        id="example-search"
+        class="examples-dialog__search"
+        type="search"
+        placeholder="Search scripts"
+      />
+
+      <div id="examples-list" class="examples-list" role="list"></div>
+    </dialog>
+
+    <script type="module" src="../../src/main.js"></script>
+  </body>
+</html>

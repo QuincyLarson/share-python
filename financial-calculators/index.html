@@ -1,0 +1,444 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Financial Calculators in Python | SharePython.com</title>
+    <meta
+      name="description"
+      content="Browse browser-run financial calculator Python scripts with dedicated pages for mortgages, loans, investing, retirement, taxes, and more."
+    />
+    <meta property="og:title" content="Financial Calculators in Python | SharePython.com" />
+    <meta
+      property="og:description"
+      content="Browse browser-run financial calculator Python scripts with dedicated pages for mortgages, loans, investing, retirement, taxes, and more."
+    />
+    <meta property="og:type" content="website" />
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #f5f6f7;
+        --surface: #ffffff;
+        --text: #0a0a23;
+        --muted: #3b3b4f;
+        --border: #d0d0d5;
+        --accent: #0a0a23;
+        --accent-text: #ffffff;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #0a0a23;
+          --surface: #1b1b32;
+          --text: #f5f6f7;
+          --muted: #d0d0d5;
+          --border: #3b3b4f;
+          --accent: #f1be32;
+          --accent-text: #0a0a23;
+        }
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font: 400 16px/1.5 sans-serif;
+        background: var(--bg);
+        color: var(--text);
+      }
+
+      main {
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: 32px 20px 72px;
+      }
+
+      h1,
+      h2,
+      p,
+      ul {
+        margin: 0;
+      }
+
+      .hub-header {
+        display: grid;
+        gap: 12px;
+        margin-bottom: 28px;
+      }
+
+      .hub-header a {
+        width: fit-content;
+        padding: 8px 12px;
+        border: 1px solid var(--border);
+        color: var(--text);
+        text-decoration: none;
+        background: var(--surface);
+      }
+
+      .hub-grid {
+        display: grid;
+        gap: 20px;
+      }
+
+      .hub-section {
+        padding: 18px;
+        border: 1px solid var(--border);
+        background: var(--surface);
+      }
+
+      .hub-section h2 {
+        margin-bottom: 14px;
+        font-size: 1.05rem;
+      }
+
+      .hub-list {
+        display: grid;
+        gap: 14px;
+        padding: 0;
+        list-style: none;
+      }
+
+      .hub-list a {
+        color: var(--accent);
+        font-weight: 700;
+        text-decoration: none;
+      }
+
+      .hub-list p {
+        margin-top: 4px;
+        color: var(--muted);
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header class="hub-header">
+        <a href="../">Open the runner</a>
+        <h1>Financial calculator Python scripts</h1>
+        <p>
+          Each calculator page opens a runnable Python script with editable constants and plain-text
+          output.
+        </p>
+      </header>
+      <div class="hub-grid">
+
+        <section class="hub-section">
+          <h2>Auto</h2>
+          <ul class="hub-list">
+            <li>
+              <a href="./auto-lease-calculator/">Auto Lease Calculator</a>
+              <p>Estimate a simplified auto lease payment from price, residual, and money factor.</p>
+            </li>
+            <li>
+              <a href="./auto-loan-calculator/">Auto Loan Calculator</a>
+              <p>Estimate a monthly auto loan payment from price, rate, and term.</p>
+            </li>
+            <li>
+              <a href="./cash-back-or-low-interest-calculator/">Cash Back or Low Interest Calculator</a>
+              <p>Compare a rebate plus regular APR against a low promotional financing rate.</p>
+            </li>
+          </ul>
+        </section>
+        <section class="hub-section">
+          <h2>Investment</h2>
+          <ul class="hub-list">
+            <li>
+              <a href="./average-return-calculator/">Average Return Calculator</a>
+              <p>Compare arithmetic and geometric average returns from a list of annual returns.</p>
+            </li>
+            <li>
+              <a href="./bond-calculator/">Bond Calculator</a>
+              <p>Estimate a bond price from face value, coupon rate, yield, and years to maturity.</p>
+            </li>
+            <li>
+              <a href="./cd-calculator/">CD Calculator</a>
+              <p>Estimate certificate-of-deposit growth at a fixed rate over a fixed term.</p>
+            </li>
+            <li>
+              <a href="./compound-interest-calculator/">Compound Interest Calculator</a>
+              <p>Estimate compound growth from a starting balance and recurring monthly contributions.</p>
+            </li>
+            <li>
+              <a href="./finance-calculator/">Finance Calculator</a>
+              <p>Summarize a simple time-value-of-money scenario from present value, rate, term, and monthly deposits.</p>
+            </li>
+            <li>
+              <a href="./future-value-calculator/">Future Value Calculator</a>
+              <p>Project a present amount forward with an annual growth rate.</p>
+            </li>
+            <li>
+              <a href="./interest-calculator/">Interest Calculator</a>
+              <p>Project a balance with compounding and optional monthly contributions.</p>
+            </li>
+            <li>
+              <a href="./interest-rate-calculator/">Interest Rate Calculator</a>
+              <p>Solve for the annual return needed to reach a target balance on a simple growth model.</p>
+            </li>
+            <li>
+              <a href="./investment-calculator/">Investment Calculator</a>
+              <p>Project long-term investment growth with a starting balance and monthly additions.</p>
+            </li>
+            <li>
+              <a href="./irr-calculator/">IRR Calculator</a>
+              <p>Estimate an internal rate of return from an ordered sequence of cash flows.</p>
+            </li>
+            <li>
+              <a href="./mutual-fund-calculator/">Mutual Fund Calculator</a>
+              <p>Project a fund balance after an annual expense ratio and recurring deposits.</p>
+            </li>
+            <li>
+              <a href="./payback-period-calculator/">Payback Period Calculator</a>
+              <p>Estimate the year in which cumulative cash flow turns positive.</p>
+            </li>
+            <li>
+              <a href="./present-value-calculator/">Present Value Calculator</a>
+              <p>Discount a future cash amount back to a present value.</p>
+            </li>
+            <li>
+              <a href="./roi-calculator/">ROI Calculator</a>
+              <p>Compute a simple return on investment from cost and ending value.</p>
+            </li>
+            <li>
+              <a href="./savings-calculator/">Savings Calculator</a>
+              <p>Project a savings balance from a starting amount, rate, and recurring deposits.</p>
+            </li>
+            <li>
+              <a href="./simple-interest-calculator/">Simple Interest Calculator</a>
+              <p>Compute a non-compounding simple-interest balance over a fixed term.</p>
+            </li>
+          </ul>
+        </section>
+        <section class="hub-section">
+          <h2>Mortgage and Real Estate</h2>
+          <ul class="hub-list">
+            <li>
+              <a href="./amortization-calculator/">Amortization Calculator</a>
+              <p>Print a compact amortization summary and the opening payment rows.</p>
+            </li>
+            <li>
+              <a href="./apr-calculator/">APR Calculator</a>
+              <p>Estimate a loan APR from fees, payment amount, and term length.</p>
+            </li>
+            <li>
+              <a href="./debt-to-income-ratio-calculator/">Debt-to-Income Ratio Calculator</a>
+              <p>Compute a gross monthly debt-to-income ratio from income and debt payments.</p>
+            </li>
+            <li>
+              <a href="./down-payment-calculator/">Down Payment Calculator</a>
+              <p>Convert a home price and down payment rate into cash down and financed balance.</p>
+            </li>
+            <li>
+              <a href="./fha-loan-calculator/">FHA Loan Calculator</a>
+              <p>Estimate a simplified FHA payment including monthly mortgage insurance.</p>
+            </li>
+            <li>
+              <a href="./heloc-calculator/">HELOC Calculator</a>
+              <p>Estimate draw-period interest-only payments and later repayment-period payments.</p>
+            </li>
+            <li>
+              <a href="./home-equity-loan-calculator/">Home Equity Loan Calculator</a>
+              <p>Estimate a fixed-rate home equity loan payment and total interest.</p>
+            </li>
+            <li>
+              <a href="./house-affordability-calculator/">House Affordability Calculator</a>
+              <p>Estimate a supported loan amount from income, rate, and a target housing ratio.</p>
+            </li>
+            <li>
+              <a href="./mortgage-calculator/">Mortgage Calculator</a>
+              <p>Estimate a fixed-rate mortgage payment, total paid, and total interest.</p>
+            </li>
+            <li>
+              <a href="./mortgage-payoff-calculator/">Mortgage Payoff Calculator</a>
+              <p>Estimate how extra monthly payments change a mortgage payoff timeline.</p>
+            </li>
+            <li>
+              <a href="./real-estate-calculator/">Real Estate Calculator</a>
+              <p>Summarize cap rate, cash flow, and a simple appreciation scenario for a property.</p>
+            </li>
+            <li>
+              <a href="./refinance-calculator/">Refinance Calculator</a>
+              <p>Compare current and proposed refinance payments and closing-cost break-even timing.</p>
+            </li>
+            <li>
+              <a href="./rent-calculator/">Rent Calculator</a>
+              <p>Compare current rent costs with a simple income-based target.</p>
+            </li>
+            <li>
+              <a href="./rent-vs-buy-calculator/">Rent vs. Buy Calculator</a>
+              <p>Compare simplified multi-year rent costs with a buy-side cash outlay estimate.</p>
+            </li>
+            <li>
+              <a href="./rental-property-calculator/">Rental Property Calculator</a>
+              <p>Estimate annual cash flow and cash-on-cash return for a rental property.</p>
+            </li>
+            <li>
+              <a href="./va-mortgage-calculator/">VA Mortgage Calculator</a>
+              <p>Estimate a simplified VA mortgage payment with a rolled-in funding fee.</p>
+            </li>
+          </ul>
+        </section>
+        <section class="hub-section">
+          <h2>Other</h2>
+          <ul class="hub-list">
+            <li>
+              <a href="./boat-loan-calculator/">Boat Loan Calculator</a>
+              <p>Estimate a boat loan payment, total paid, and total interest.</p>
+            </li>
+            <li>
+              <a href="./budget-calculator/">Budget Calculator</a>
+              <p>Summarize monthly spending, surplus, and the largest expense category.</p>
+            </li>
+            <li>
+              <a href="./business-loan-calculator/">Business Loan Calculator</a>
+              <p>Estimate a business loan payment, total paid, and total interest.</p>
+            </li>
+            <li>
+              <a href="./college-cost-calculator/">College Cost Calculator</a>
+              <p>Project future college costs with inflation and compare them to current savings growth.</p>
+            </li>
+            <li>
+              <a href="./commission-calculator/">Commission Calculator</a>
+              <p>Compute commission pay from sales volume, commission rate, and base pay.</p>
+            </li>
+            <li>
+              <a href="./credit-card-calculator/">Credit Card Calculator</a>
+              <p>Estimate credit card payoff time and interest from a fixed monthly payment.</p>
+            </li>
+            <li>
+              <a href="./credit-cards-payoff-calculator/">Credit Cards Payoff Calculator</a>
+              <p>Rank multiple cards for an avalanche payoff plan and summarize the combined minimum payment.</p>
+            </li>
+            <li>
+              <a href="./currency-calculator/">Currency Calculator</a>
+              <p>Convert a USD amount using editable exchange rates entered directly in the script.</p>
+            </li>
+            <li>
+              <a href="./debt-consolidation-calculator/">Debt Consolidation Calculator</a>
+              <p>Compare a weighted average debt rate against a new consolidated loan offer.</p>
+            </li>
+            <li>
+              <a href="./debt-payoff-calculator/">Debt Payoff Calculator</a>
+              <p>Rank multiple debts for a simplified snowball payoff plan.</p>
+            </li>
+            <li>
+              <a href="./depreciation-calculator/">Depreciation Calculator</a>
+              <p>Compare straight-line depreciation with a first-year double-declining estimate.</p>
+            </li>
+            <li>
+              <a href="./discount-calculator/">Discount Calculator</a>
+              <p>Compute savings and a discounted price from a list price and discount rate.</p>
+            </li>
+            <li>
+              <a href="./inflation-calculator/">Inflation Calculator</a>
+              <p>Project a future cost and today-value comparison from a simple inflation rate.</p>
+            </li>
+            <li>
+              <a href="./lease-calculator/">Lease Calculator</a>
+              <p>Estimate a simplified lease payment from cost, residual value, and money factor.</p>
+            </li>
+            <li>
+              <a href="./loan-calculator/">Loan Calculator</a>
+              <p>Estimate a generic fixed-rate loan payment, total paid, and total interest.</p>
+            </li>
+            <li>
+              <a href="./margin-calculator/">Margin Calculator</a>
+              <p>Compute gross profit, margin, and markup from selling price and cost.</p>
+            </li>
+            <li>
+              <a href="./payment-calculator/">Payment Calculator</a>
+              <p>Estimate the payment needed to amortize a balance over a chosen term and rate.</p>
+            </li>
+            <li>
+              <a href="./personal-loan-calculator/">Personal Loan Calculator</a>
+              <p>Estimate a personal loan payment, total paid, and total interest.</p>
+            </li>
+            <li>
+              <a href="./repayment-calculator/">Repayment Calculator</a>
+              <p>Print a compact repayment schedule summary and opening amortization rows.</p>
+            </li>
+            <li>
+              <a href="./sales-tax-calculator/">Sales Tax Calculator</a>
+              <p>Compute a sales tax amount and a tax-inclusive price from a base amount.</p>
+            </li>
+            <li>
+              <a href="./student-loan-calculator/">Student Loan Calculator</a>
+              <p>Estimate a fixed student loan payment, total paid, and total interest.</p>
+            </li>
+            <li>
+              <a href="./vat-calculator/">VAT Calculator</a>
+              <p>Compute VAT and a VAT-inclusive price from a pre-tax amount.</p>
+            </li>
+          </ul>
+        </section>
+        <section class="hub-section">
+          <h2>Retirement</h2>
+          <ul class="hub-list">
+            <li>
+              <a href="./401k-calculator/">401K Calculator</a>
+              <p>Project a 401(k) balance including a simple employer match.</p>
+            </li>
+            <li>
+              <a href="./annuity-calculator/">Annuity Calculator</a>
+              <p>Project the future value of a stream of annuity-style contributions.</p>
+            </li>
+            <li>
+              <a href="./annuity-payout-calculator/">Annuity Payout Calculator</a>
+              <p>Estimate a level monthly payout from an annuity balance over a fixed term.</p>
+            </li>
+            <li>
+              <a href="./ira-calculator/">IRA Calculator</a>
+              <p>Project traditional IRA growth with ongoing monthly contributions.</p>
+            </li>
+            <li>
+              <a href="./pension-calculator/">Pension Calculator</a>
+              <p>Estimate a pension benefit from service years, salary, and accrual rate.</p>
+            </li>
+            <li>
+              <a href="./retirement-calculator/">Retirement Calculator</a>
+              <p>Project a retirement balance from contributions, growth, and time until retirement.</p>
+            </li>
+            <li>
+              <a href="./rmd-calculator/">RMD Calculator</a>
+              <p>Estimate a required minimum distribution using an editable divisor table.</p>
+            </li>
+            <li>
+              <a href="./roth-ira-calculator/">Roth IRA Calculator</a>
+              <p>Project Roth IRA growth from annual returns and monthly contributions.</p>
+            </li>
+            <li>
+              <a href="./social-security-calculator/">Social Security Calculator</a>
+              <p>Estimate a simplified Social Security monthly benefit from a PIA and claim age.</p>
+            </li>
+          </ul>
+        </section>
+        <section class="hub-section">
+          <h2>Tax and Salary</h2>
+          <ul class="hub-list">
+            <li>
+              <a href="./estate-tax-calculator/">Estate Tax Calculator</a>
+              <p>Estimate a simple estate tax bill from a gross estate, exemption, and flat tax rate.</p>
+            </li>
+            <li>
+              <a href="./income-tax-calculator/">Income Tax Calculator</a>
+              <p>Estimate income tax from an editable progressive bracket table.</p>
+            </li>
+            <li>
+              <a href="./marriage-tax-calculator/">Marriage Tax Calculator</a>
+              <p>Compare simplified tax estimates for two single filers versus one married return.</p>
+            </li>
+            <li>
+              <a href="./salary-calculator/">Salary Calculator</a>
+              <p>Convert an hourly rate into weekly, monthly, and annual salary figures.</p>
+            </li>
+            <li>
+              <a href="./take-home-paycheck-calculator/">Take-Home-Paycheck Calculator</a>
+              <p>Estimate take-home pay from gross salary and a set of flat withholding rates.</p>
+            </li>
+          </ul>
+        </section>
+      </div>
+    </main>
+  </body>
+</html>

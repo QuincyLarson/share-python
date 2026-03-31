@@ -31,11 +31,13 @@ export function saveDraft(draft, storage = globalThis.localStorage) {
 }
 
 export function resolveInitialSource({ fragmentState, localDraft, defaultExample }) {
+  const fragmentRuntimeHint = fragmentState?.runtimeHint ?? null;
+
   if (fragmentState?.source) {
     return {
       source: fragmentState.source,
       exampleId: fragmentState.exampleId ?? null,
-      runtimeHint: fragmentState.runtimeHint ?? null,
+      runtimeHint: fragmentRuntimeHint,
       origin: fragmentState.exampleId ? 'shared example' : 'shared code',
       warning: fragmentState.error ?? null,
     };
@@ -45,9 +47,19 @@ export function resolveInitialSource({ fragmentState, localDraft, defaultExample
     return {
       source: defaultExample.source,
       exampleId: defaultExample.id,
-      runtimeHint: defaultExample.runtime,
+      runtimeHint: fragmentRuntimeHint ?? defaultExample.runtime,
       origin: 'starter example',
       warning: fragmentState.error,
+    };
+  }
+
+  if (defaultExample?.routeSlug) {
+    return {
+      source: defaultExample.source,
+      exampleId: defaultExample.id,
+      runtimeHint: fragmentRuntimeHint ?? defaultExample.runtime,
+      origin: 'route example',
+      warning: null,
     };
   }
 
@@ -55,7 +67,7 @@ export function resolveInitialSource({ fragmentState, localDraft, defaultExample
     return {
       source: localDraft.source,
       exampleId: localDraft.exampleId ?? null,
-      runtimeHint: localDraft.runtimeHint ?? null,
+      runtimeHint: fragmentRuntimeHint ?? localDraft.runtimeHint ?? null,
       origin: 'local draft',
       warning: null,
     };
@@ -64,7 +76,7 @@ export function resolveInitialSource({ fragmentState, localDraft, defaultExample
   return {
     source: defaultExample.source,
     exampleId: defaultExample.id,
-    runtimeHint: defaultExample.runtime,
+    runtimeHint: fragmentRuntimeHint ?? defaultExample.runtime,
     origin: 'starter example',
     warning: null,
   };

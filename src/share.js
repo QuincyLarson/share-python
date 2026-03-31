@@ -1,5 +1,6 @@
 import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from 'lz-string';
 import { APP_CONFIG } from './config.js';
+import { buildExampleRoutePath } from './example-routes.js';
 import { normalizeExampleSource } from './starter.js';
 
 export const SHARE_VERSION = APP_CONFIG.shareVersion;
@@ -40,6 +41,29 @@ export function buildShareFragment({ source, runtimeHint, examples }) {
 }
 
 export function buildShareUrl({ source, runtimeHint, examples, location = window.location }) {
+  const matchingExample = findMatchingExample(source, examples);
+
+  if (matchingExample?.routeSlug) {
+    const validRuntimeHint = sanitizeRuntimeHint(runtimeHint);
+    const fragmentParams = new URLSearchParams();
+
+    if (validRuntimeHint && validRuntimeHint !== matchingExample.runtime) {
+      fragmentParams.set('rt', validRuntimeHint);
+    }
+
+    const fragment = fragmentParams.toString();
+
+    return {
+      fragment,
+      isExamplePermalink: true,
+      isTooLong: false,
+      url: `${location.origin}${buildExampleRoutePath(
+        matchingExample.routeSlug,
+        location.pathname,
+      )}${fragment ? `#${fragment}` : ''}`,
+    };
+  }
+
   const { fragment, isExamplePermalink, isTooLong } = buildShareFragment({
     source,
     runtimeHint,
@@ -66,6 +90,15 @@ export function parseShareFragment(fragment, examples) {
 
   const params = new URLSearchParams(rawFragment);
   const runtimeHint = sanitizeRuntimeHint(params.get('rt'));
+
+  if (runtimeHint && [...params.keys()].length === 1 && params.has('rt')) {
+    return {
+      source: null,
+      exampleId: null,
+      runtimeHint,
+      error: null,
+    };
+  }
 
   if (params.has('ex')) {
     const exampleId = params.get('ex');

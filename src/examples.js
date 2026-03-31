@@ -7,6 +7,7 @@ export const EXAMPLES = generatedExamples.map((example) => ({
 }));
 
 const examplesById = new Map(EXAMPLES.map((example) => [example.id, example]));
+const featuredExamples = EXAMPLES.filter((example) => example.featured);
 
 export function getExampleById(exampleId) {
   return examplesById.get(exampleId) ?? null;
@@ -20,12 +21,14 @@ export function findMatchingExampleBySource(sourceText) {
 }
 
 export function getRandomExample(random = Math.random) {
-  if (EXAMPLES.length === 0) {
+  const pool = featuredExamples.length > 0 ? featuredExamples : EXAMPLES;
+
+  if (pool.length === 0) {
     return null;
   }
 
-  const index = Math.floor(random() * EXAMPLES.length);
-  return EXAMPLES[index] ?? EXAMPLES[0];
+  const index = Math.floor(random() * pool.length);
+  return pool[index] ?? pool[0];
 }
 
 export function filterExamples(searchTerm = '') {

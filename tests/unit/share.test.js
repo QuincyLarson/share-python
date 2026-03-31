@@ -20,6 +20,40 @@ describe('share helpers', () => {
     expect(result.isTooLong).toBe(false);
   });
 
+  it('builds a dedicated calculator route URL for generated financial examples', () => {
+    const mortgageExample = EXAMPLES.find((example) => example.id === 'mortgage-calculator');
+    const shareState = buildShareUrl({
+      source: mortgageExample.source,
+      runtimeHint: mortgageExample.runtime,
+      examples: EXAMPLES,
+      location: {
+        origin: 'https://sharepython.com',
+        pathname: '/',
+      },
+    });
+
+    expect(shareState.url).toBe('https://sharepython.com/financial-calculators/mortgage-calculator/');
+    expect(shareState.fragment).toBe('');
+    expect(shareState.isExamplePermalink).toBe(true);
+  });
+
+  it('keeps a route permalink short when only the runtime override changes', () => {
+    const mortgageExample = EXAMPLES.find((example) => example.id === 'mortgage-calculator');
+    const shareState = buildShareUrl({
+      source: mortgageExample.source,
+      runtimeHint: 'full',
+      examples: EXAMPLES,
+      location: {
+        origin: 'https://sharepython.com',
+        pathname: '/',
+      },
+    });
+
+    expect(shareState.url).toBe(
+      'https://sharepython.com/financial-calculators/mortgage-calculator/#rt=full',
+    );
+  });
+
   it('round-trips a custom code payload through the fragment codec', () => {
     const source = 'print("hello from custom code")\n';
     const shareState = buildShareFragment({
@@ -41,6 +75,17 @@ describe('share helpers', () => {
     const parsed = parseShareFragment('#v=1&code=not-real', EXAMPLES);
     expect(parsed.error).toMatch(/could not be decoded/i);
     expect(parsed.source).toBeNull();
+  });
+
+  it('parses a runtime-only fragment for route pages', () => {
+    const parsed = parseShareFragment('#rt=full', EXAMPLES);
+
+    expect(parsed).toEqual({
+      source: null,
+      exampleId: null,
+      runtimeHint: 'full',
+      error: null,
+    });
   });
 
   it('can flag an overly long share URL', () => {
