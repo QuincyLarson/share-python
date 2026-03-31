@@ -161,7 +161,6 @@ export async function createApp() {
   const loadExampleButton = document.querySelector('#load-example-button');
   const clearOutputButton = document.querySelector('#clear-output-button');
   const runButton = document.querySelector('#run-button');
-  const stopButton = document.querySelector('#stop-button');
   const donationCta = document.querySelector('#donation-cta');
   const runtimePrompt = document.querySelector('#runtime-prompt');
   const runtimePromptMessage = document.querySelector('#runtime-prompt-message');
@@ -346,7 +345,6 @@ export async function createApp() {
 
   function setRunningState(isRunning) {
     runButton.disabled = isRunning;
-    stopButton.disabled = !isRunning;
   }
 
   function chooseRuntime(forceRuntime = null) {
@@ -403,11 +401,9 @@ export async function createApp() {
     onTimedOut: ({ runtime }) => {
       setRunningState(false);
       appendOutput(
-        `\n[timed out after ${
-          runtime === 'full' ? APP_CONFIG.fullTimeoutMs : APP_CONFIG.fastTimeoutMs
-        } ms]\n`,
+        '\nError: Run time exceeded 10 seconds. Check your script for infinite loops.\n',
       );
-      renderStatus(`${formatRuntimeLabel(runtime)} timed out.`);
+      renderStatus(`${formatRuntimeLabel(runtime)} exceeded the 10-second limit.`);
     },
     onOutputLimit: ({ runtime }) => {
       setRunningState(false);
@@ -532,10 +528,6 @@ export async function createApp() {
     runCurrentSource();
   });
 
-  stopButton.addEventListener('click', () => {
-    runtimeController.stop('user');
-  });
-
   retryFullRuntimeButton.addEventListener('click', () => {
     state.runtimeHint = 'full';
     runCurrentSource('full');
@@ -571,12 +563,6 @@ export async function createApp() {
       if (!runtimeController.isRunning()) {
         runCurrentSource();
       }
-      return;
-    }
-
-    if (event.key === 'Escape' && runtimeController.isRunning()) {
-      event.preventDefault();
-      runtimeController.stop('escape');
     }
   });
 

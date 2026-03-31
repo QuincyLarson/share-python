@@ -11,8 +11,8 @@ export const APP_CONFIG = {
   maxSourceSize: 64 * 1024,
   maxShareUrlLength: 2000,
   maxOutputBytes: 256 * 1024,
-  fastTimeoutMs: 5000,
-  fullTimeoutMs: 15000,
+  fastTimeoutMs: 10000,
+  fullTimeoutMs: 10000,
 };
 
 export const FOUNDATION_OUTPUT = [

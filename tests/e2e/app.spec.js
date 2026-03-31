@@ -108,7 +108,7 @@ test('loads the shell and prepopulates issue reporting for the starter example',
 
   await expect(page.locator('#editor')).toHaveValue(new RegExp(`^${STARTER_PROMPT}`));
   await expect(page.locator('#run-button')).toBeEnabled();
-  await expect(page.locator('#stop-button')).toBeDisabled();
+  await expect(page.locator('#stop-button')).toHaveCount(0);
   await assertFoundationOutput(page);
 
   const issueHref = await page.locator('#report-issue-link').getAttribute('href');
@@ -469,19 +469,23 @@ test('formats the mortgage example output with commas and line breaks', async ({
   });
 });
 
-test('stops a long-running Fast Python script', async ({ page }) => {
+test('times out a long-running Fast Python script after 10 seconds', async ({ page }) => {
+  test.slow();
+
   await gotoApp(page);
   await fillEditor(page, 'while True:\n    pass');
 
   await page.locator('#run-button').click();
-  await expect(page.locator('#stop-button')).toBeEnabled();
-  await page.locator('#stop-button').click();
 
-  await expect(page.locator('#output')).toContainText('[stopped fast python]', {
-    timeout: 10_000,
-  });
+  await expect(page.locator('#output')).toContainText(
+    'Error: Run time exceeded 10 seconds. Check your script for infinite loops.',
+    {
+      timeout: 15_000,
+    },
+  );
+  await expect(page.locator('#output')).not.toContainText('[completed]');
   await expect(page.locator('#run-button')).toBeEnabled();
-  await expect(page.locator('#stop-button')).toBeDisabled();
+  await expect(page.locator('#stop-button')).toHaveCount(0);
 });
 
 test('offers a Full Python retry for a runtime mismatch and succeeds after retry', async ({
