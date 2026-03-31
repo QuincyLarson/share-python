@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-import { FOUNDATION_OUTPUT } from '../../src/config.js';
+import { APP_CONFIG, FOUNDATION_OUTPUT } from '../../src/config.js';
 import { STARTER_PROMPT } from '../../src/starter.js';
 
 const FOUNDATION_LINES = FOUNDATION_OUTPUT.split('\n').filter(Boolean);
@@ -63,8 +63,9 @@ const DYNAMIC_FULL_RUNTIME_SCRIPT = [
   'print(fractions.Fraction(3, 2))',
 ].join('\n');
 
-async function gotoApp(page, fragment = '') {
-  await page.goto(fragment ? `/#${fragment}` : '/');
+async function gotoApp(page, options = {}) {
+  const { pathname = '/', fragment = '' } = options;
+  await page.goto(fragment ? `${pathname}#${fragment}` : pathname);
   await expect(page.locator('#editor')).toBeVisible();
 }
 
@@ -288,6 +289,54 @@ test('copies a share link that restores editor contents without autorun', async 
 
   await expect(sharedPage.locator('#editor')).toHaveValue(customSource);
   await assertFoundationOutput(sharedPage);
+});
+
+test('loads a generated calculator route page with calculator-specific metadata and source', async ({
+  page,
+}) => {
+  await page.addInitScript(({ storageKey }) => {
+    localStorage.setItem(
+      storageKey,
+      JSON.stringify({
+        source: 'print("draft should not win")',
+        exampleId: null,
+        runtimeHint: 'fast',
+      }),
+    );
+
+    window.__copiedTexts = [];
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: {
+        writeText: async (text) => {
+          window.__copiedTexts.push(text);
+        },
+      },
+    });
+  }, { storageKey: APP_CONFIG.storageKey });
+
+  await gotoApp(page, {
+    pathname: '/financial-calculators/mortgage-calculator/',
+  });
+
+  await expect(page).toHaveTitle(/Mortgage Calculator Python Script/i);
+  await expect(page.locator('#editor')).toHaveValue(/# Mortgage Calculator/);
+  await expect(page.locator('#editor')).not.toHaveValue(/draft should not win/);
+  await expect(page.locator('#editor')).not.toHaveValue(new RegExp(`^${STARTER_PROMPT}`));
+
+  await page.locator('#copy-share-link-button').click();
+  await expect
+    .poll(() => captureCopiedShareUrl(page))
+    .toBe('http://127.0.0.1:4174/financial-calculators/mortgage-calculator/');
+
+  await page.locator('#run-button').click();
+
+  await expect(page.locator('#output')).toContainText('Mortgage payment summary', {
+    timeout: 30_000,
+  });
+  await expect(page.locator('#output')).toContainText('Monthly payment:', {
+    timeout: 30_000,
+  });
 });
 
 test('runs the time zone library example in Fast Python', async ({ page }) => {

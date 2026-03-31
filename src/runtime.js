@@ -1,4 +1,5 @@
 import { APP_CONFIG } from './config.js';
+import { getAppBasePath } from './example-routes.js';
 import { getByteLength } from './limits.js';
 import FastWorker from './workers/fast-worker.js?worker';
 import FullWorker from './workers/full-worker.js?worker';
@@ -9,9 +10,12 @@ const workerConstructors = {
 };
 
 function buildRuntimeAssets(pageUrl = window.location.href) {
+  const currentUrl = new URL(pageUrl);
+  const appBaseUrl = new URL(getAppBasePath(currentUrl.pathname), currentUrl.origin);
+
   return {
-    fastWasmUrl: new URL('runtimes/fast/micropython.wasm', pageUrl).toString(),
-    fullIndexUrl: new URL('runtimes/full/', pageUrl).toString(),
+    fastWasmUrl: new URL('runtimes/fast/micropython.wasm', appBaseUrl).toString(),
+    fullIndexUrl: new URL('runtimes/full/', appBaseUrl).toString(),
   };
 }
 
