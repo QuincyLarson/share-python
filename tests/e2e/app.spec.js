@@ -315,6 +315,9 @@ test('copies a share link that restores editor contents without autorun', async 
 
   await fillEditor(page, customSource);
   await page.locator('#copy-share-link-button').click();
+  await expect(page.locator('#share-link-popover')).toContainText(
+    'A sharable URL was copied to your clipboard',
+  );
 
   const copiedUrl = await captureCopiedShareUrl(page);
   expect(copiedUrl).toContain('#');
@@ -328,6 +331,7 @@ test('copies a share link that restores editor contents without autorun', async 
 
 test('loads a generated calculator route page with calculator-specific metadata and source', async ({
   page,
+  context,
 }) => {
   await page.addInitScript(({ storageKey }) => {
     localStorage.setItem(
@@ -362,7 +366,14 @@ test('loads a generated calculator route page with calculator-specific metadata 
   await page.locator('#copy-share-link-button').click();
   await expect
     .poll(() => captureCopiedShareUrl(page))
-    .toBe('http://127.0.0.1:4174/financial-calculators/mortgage-calculator/');
+    .toContain('http://127.0.0.1:4174/financial-calculators/mortgage-calculator/#');
+  await expect.poll(() => captureCopiedShareUrl(page)).toContain('#v=');
+  const copiedUrl = await captureCopiedShareUrl(page);
+
+  const sharedPage = await context.newPage();
+  await sharedPage.goto(copiedUrl);
+  await expect(sharedPage.locator('#editor')).toHaveValue(/# Mortgage Calculator/);
+  await assertFoundationOutput(sharedPage);
 
   await page.locator('#run-button').click();
 

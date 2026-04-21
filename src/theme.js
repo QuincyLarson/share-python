@@ -47,7 +47,5 @@ export function getNextThemePreference(themePreference, systemPrefersDark = fals
 }
 
 export function getThemeToggleLabel(themePreference, systemPrefersDark = false) {
-  return resolveThemePreference(themePreference, systemPrefersDark) === 'dark'
-    ? 'Night mode'
-    : 'Day mode';
+  return 'Toggle Day / Night';
 }

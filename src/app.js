@@ -157,6 +157,7 @@ export async function createApp() {
   const examplesTitle = document.querySelector('#examples-title');
   const reportIssueLink = document.querySelector('#report-issue-link');
   const copyShareLinkButton = document.querySelector('#copy-share-link-button');
+  const shareLinkPopover = document.querySelector('#share-link-popover');
   const copyOutputButton = document.querySelector('#copy-output-button');
   const loadExampleButton = document.querySelector('#load-example-button');
   const clearOutputButton = document.querySelector('#clear-output-button');
@@ -221,9 +222,31 @@ export async function createApp() {
     hadRunOutput: false,
     themePreference: loadThemePreference(),
   };
+  let sharePopoverTimeoutId = null;
 
   function renderStatus(message) {
     statusMessage.textContent = message;
+  }
+
+  function hideShareLinkPopover() {
+    if (!shareLinkPopover) {
+      return;
+    }
+
+    shareLinkPopover.hidden = true;
+  }
+
+  function showShareLinkPopover(message) {
+    if (!shareLinkPopover) {
+      return;
+    }
+
+    shareLinkPopover.textContent = message;
+    shareLinkPopover.hidden = false;
+    window.clearTimeout(sharePopoverTimeoutId);
+    sharePopoverTimeoutId = window.setTimeout(() => {
+      shareLinkPopover.hidden = true;
+    }, 2400);
   }
 
   function renderTheme() {
@@ -240,15 +263,16 @@ export async function createApp() {
     }
 
     if (themeToggleButton) {
-      const nextThemePreference = getNextThemePreference(state.themePreference, systemPrefersDark);
       themeToggleButton.textContent = getThemeToggleLabel(state.themePreference, systemPrefersDark);
-      themeToggleButton.title = `Switch to ${nextThemePreference === 'dark' ? 'night' : 'day'} mode.`;
+      themeToggleButton.title = `Currently in ${
+        resolvedTheme === 'dark' ? 'night' : 'day'
+      } mode. Toggle day and night mode.`;
       themeToggleButton.setAttribute(
         'aria-label',
         `${getThemeToggleLabel(
           state.themePreference,
           systemPrefersDark,
-        )}. Click to switch to ${nextThemePreference === 'dark' ? 'night' : 'day'} mode.`,
+        )}. Currently in ${resolvedTheme === 'dark' ? 'night' : 'day'} mode.`,
       );
     }
 
@@ -494,10 +518,12 @@ export async function createApp() {
       source: state.source,
       runtimeHint: state.runtimeHint,
       examples: EXAMPLES,
+      forceEncodedSource: true,
     });
 
     try {
       await copyText(shareState.url);
+      showShareLinkPopover('A sharable URL was copied to your clipboard');
       renderStatus(
         shareState.isTooLong
           ? 'Copied a long share link.'
@@ -506,6 +532,7 @@ export async function createApp() {
             : 'Copied a share link.',
       );
     } catch {
+      hideShareLinkPopover();
       renderStatus('Could not copy the link automatically.');
     }
   });

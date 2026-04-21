@@ -49,9 +49,9 @@ describe('theme preferences', () => {
     expect(loadThemePreference(storage)).toBeNull();
   });
 
-  it('renders compact button labels', () => {
-    expect(getThemeToggleLabel(null, true)).toBe('Night mode');
-    expect(getThemeToggleLabel('dark')).toBe('Night mode');
-    expect(getThemeToggleLabel('light')).toBe('Day mode');
+  it('renders a stable toggle button label', () => {
+    expect(getThemeToggleLabel(null, true)).toBe('Toggle Day / Night');
+    expect(getThemeToggleLabel('dark')).toBe('Toggle Day / Night');
+    expect(getThemeToggleLabel('light')).toBe('Toggle Day / Night');
   });
 });

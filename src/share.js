@@ -14,8 +14,13 @@ export function findMatchingExample(sourceText, examples) {
   return examples.find((example) => normalizeExampleSource(example.source) === normalizedSource) ?? null;
 }
 
-export function buildShareFragment({ source, runtimeHint, examples }) {
-  const matchingExample = findMatchingExample(source, examples);
+export function buildShareFragment({
+  source,
+  runtimeHint,
+  examples,
+  forceEncodedSource = false,
+}) {
+  const matchingExample = forceEncodedSource ? null : findMatchingExample(source, examples);
   const params = new URLSearchParams();
 
   if (matchingExample) {
@@ -40,8 +45,14 @@ export function buildShareFragment({ source, runtimeHint, examples }) {
   };
 }
 
-export function buildShareUrl({ source, runtimeHint, examples, location = window.location }) {
-  const matchingExample = findMatchingExample(source, examples);
+export function buildShareUrl({
+  source,
+  runtimeHint,
+  examples,
+  location = window.location,
+  forceEncodedSource = false,
+}) {
+  const matchingExample = forceEncodedSource ? null : findMatchingExample(source, examples);
 
   const examplePagePath =
     matchingExample?.pagePath ??
@@ -71,6 +82,7 @@ export function buildShareUrl({ source, runtimeHint, examples, location = window
     source,
     runtimeHint,
     examples,
+    forceEncodedSource,
   });
 
   return {

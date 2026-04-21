@@ -54,6 +54,35 @@ describe('share helpers', () => {
     );
   });
 
+  it('can force an encoded share URL even when the source matches a curated example', () => {
+    const mortgageExample = EXAMPLES.find((example) => example.id === 'mortgage-calculator');
+    const shareState = buildShareUrl({
+      source: mortgageExample.source,
+      runtimeHint: mortgageExample.runtime,
+      examples: EXAMPLES,
+      forceEncodedSource: true,
+      location: {
+        origin: 'https://sharepython.com',
+        pathname: '/financial-calculators/mortgage-calculator/',
+      },
+    });
+
+    const shareUrl = new URL(shareState.url);
+
+    expect(shareUrl.origin).toBe('https://sharepython.com');
+    expect(shareUrl.pathname).toBe('/financial-calculators/mortgage-calculator/');
+    expect(shareUrl.hash).toContain('v=1');
+    expect(shareUrl.hash).toContain('code=');
+    expect(shareState.isExamplePermalink).toBe(false);
+
+    expect(parseShareFragment(shareUrl.hash, EXAMPLES)).toEqual({
+      source: mortgageExample.source,
+      exampleId: null,
+      runtimeHint: mortgageExample.runtime,
+      error: null,
+    });
+  });
+
   it('round-trips a custom code payload through the fragment codec', () => {
     const source = 'print("hello from custom code")\n';
     const shareState = buildShareFragment({

@@ -97,10 +97,15 @@
             <button id="run-button" class="button button--primary" type="button">
               Run (control + enter)
             </button>
-            <button id="copy-share-link-button" class="button" type="button">Copy link</button>
+            <div class="button-popover-anchor">
+              <button id="copy-share-link-button" class="button" type="button">Share code</button>
+              <span id="share-link-popover" class="button-popover" role="status" hidden>
+                A sharable URL was copied to your clipboard
+              </span>
+            </div>
             <a
               id="report-issue-link"
-              class="button button--link"
+              class="button"
               href="https://github.com/QuincyLarson/share-python/issues/new"
               target="_blank"
               rel="noreferrer"
@@ -112,7 +117,7 @@
               class="button"
               type="button"
             >
-              Day mode
+              Toggle Day / Night
             </button>
           </div>
           <div class="nav-bar__group nav-bar__group--library">
